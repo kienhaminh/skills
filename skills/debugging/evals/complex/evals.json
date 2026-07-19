@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "skill": "debugging",
+  "method": "Independent read-only static-analysis runs over isolated fixtures. Natural user prompts do not encode the skill workflow. Same prompt with and without the skill; no rubric or expected answer is shown. gpt-5.6-terra low and medium reasoning.",
+  "max_output_words": 200,
+  "pass_threshold": 8,
+  "maximum_per_case": 10,
+  "models": [
+    {"model": "gpt-5.6-terra", "reasoning_effort": "low"},
+    {"model": "gpt-5.6-terra", "reasoning_effort": "medium"}
+  ],
+  "cases": [
+    {
+      "id": "lost-update",
+      "prompt": "Treat FIXTURE as the project root. The counter anomaly is too expensive to reproduce, so investigate the incident from the current code without running anything. Diagnose the root cause and explain your confidence. Do not propose a fix or edit the fixture. FIXTURE=/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/complex/fixtures/lost-update",
+      "checks": [
+        {"id":"root-cause","points":2,"groups":[["lost[ -]update","read.modify.write","race condition"]]},
+        {"id":"interleaving","points":2,"groups":[["both.*read", "same.*value", "concurrent.*read"],["both.*write", "overwrite", "last write"]]},
+        {"id":"invariant","points":1,"groups":[["invariant", "two.*increment", "each.*increment"]]},
+        {"id":"audit-not-cause","points":1,"groups":[["audit.*not", "both audit", "audit.*evidence"]]},
+        {"id":"static-evidence","points":1,"groups":[["code", "static", "analysis.derived", "increment\\(\\)"],["read", "write"]]},
+        {"id":"alternatives","points":1,"groups":[["alternative", "repository error", "database error", "audit failure"]]},
+        {"id":"uncertainty","points":1,"groups":[["confidence"],["unverified", "would confirm", "confirmation.*require", "evidence.*needed", "not reproduced", "analysis.derived", "runtime.confirmed", "to confirm"]]},
+        {"id":"diagnose-only","points":1,"forbidden":["you should", "recommend", "to fix", "use an atomic", "add a lock"]}
+      ]
+    },
+    {
+      "id": "retry-side-effect",
+      "prompt": "Treat FIXTURE as the project root. The duplicate-email anomaly is too expensive to reproduce, so investigate the incident from the current code without running anything. Diagnose the root cause and explain your confidence. Do not propose a fix or edit the fixture. FIXTURE=/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/complex/fixtures/retry-side-effect",
+      "checks": [
+        {"id":"root-cause","points":2,"groups":[["non.idempotent", "side effect.*before", "email.*before.*processed", "retry.*send.*again", "non.atomic.*send", "send.*persistence.*boundary", "separate.*operations"]]},
+        {"id":"retry-boundary","points":2,"groups":[["timeout", "times out", "timed out"],["retry"],["send.*twice", "send.*again", "duplicate email", "second.*send"]]},
+        {"id":"marker-explanation","points":1,"groups":[["one.*processed", "processed.*row", "marker"]]},
+        {"id":"invariant","points":1,"groups":[["invariant", "at most once", "exactly once", "non.idempotent", "non.atomic", "prevent.*repeated", "broken assumption"]]},
+        {"id":"static-evidence","points":1,"groups":[["handle", "worker", "code"],["mailer", "send"],["insert", "processed"]]},
+        {"id":"alternatives","points":1,"groups":[["alternative", "mailer", "queue.*duplicate", "manual"]]},
+        {"id":"uncertainty","points":1,"groups":[["confidence"],["unverified", "would confirm", "evidence.*needed", "timing", "assum", "not reproduced"]]},
+        {"id":"diagnose-only","points":1,"forbidden":["you should", "recommend", "to fix", "move the send", "implement an outbox"]}
+      ]
+    },
+    {
+      "id": "tenant-cache",
+      "prompt": "Treat FIXTURE as the project root. The cross-tenant profile anomaly is too expensive to reproduce, so investigate the incident from the current code without running anything. Diagnose the root cause and explain your confidence. Do not propose a fix or edit the fixture. FIXTURE=/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/complex/fixtures/tenant-cache",
+      "checks": [
+        {"id":"root-cause","points":2,"groups":[["cache key.*tenant", "missing.*tenant", "key.*only.*user", "under.scoped.*cache"]]},
+        {"id":"collision-chain","points":2,"groups":[["same userId", "same user ID", "share.*user", "overlapping user"],["same.*key", "same.*entry", "shared key", "collision", "profile:<userId>"],["cached.*other tenant", "cross.tenant", "wrong tenant", "returns.*cached.*profile", "returns.*display name", "returns it", "other tenant.*profile"]]},
+        {"id":"db-rejection","points":1,"groups":[["database.*not", "query.*tenant", "repo.*tenant", "DB.*correct"]]},
+        {"id":"invariant","points":1,"groups":[["invariant", "tenant isolation", "tenant.scoped", "cross.tenant", "tenant scope"]]},
+        {"id":"static-evidence","points":1,"groups":[["ProfileService", "profile.service", "code", "getProfile"],["profile:", "cache key"]]},
+        {"id":"alternatives","points":1,"groups":[["alternative", "database", "repository", "stale"]]},
+        {"id":"uncertainty","points":1,"groups":[["confidence"],["uncertainty", "unverified", "would confirm", "evidence.*needed", "not reproduced", "not established", "static analysis", "remaining.*unknown", "runtime unknown"]]},
+        {"id":"diagnose-only","points":1,"forbidden":["you should", "recommend", "to fix", "include tenant", "change the key"]}
+      ]
+    }
+  ]
+}

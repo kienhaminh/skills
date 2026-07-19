@@ -1,0 +1,4 @@
+interface:
+  display_name: "Debugging"
+  short_description: "Investigate local failures and find root causes"
+  default_prompt: "Use $debugging to investigate this local project failure and determine its root cause."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "To Stories"
+  short_description: "Turn a plan into an epic plus behaviour-sliced user stories"
+  default_prompt: "Use $to-stories to convert this plan into an epic plus behaviour-sliced user stories with acceptance criteria."

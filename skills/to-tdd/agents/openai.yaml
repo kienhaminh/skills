@@ -1,0 +1,4 @@
+interface:
+  display_name: "To TDD"
+  short_description: "Turn a user story into an enumerated test list and real red tests first"
+  default_prompt: "Use $to-tdd to turn this user story into an enumerated test list and failing red tests, no production code."

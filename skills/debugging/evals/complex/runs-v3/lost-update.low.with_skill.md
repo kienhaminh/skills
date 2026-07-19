@@ -1,0 +1,5 @@
+Diagnosis — high confidence (analysis-derived, not runtime-confirmed): this is a lost-update race in `CounterService.increment`. The operation implements a non-atomic read–modify–write sequence: two concurrent calls can both read value N, both emit their audit event, calculate N + 1, and each write N + 1. The later write succeeds but overwrites the same value, so the final counter rises by one rather than two.
+
+The violated invariant is that every successful increment must be reflected exactly once in the persisted counter. The incident's two audit events and absence of repository errors fit this sequence: auditing occurs after the read and before either write, while both ordinary writes can succeed without detecting a conflict.
+
+The strongest alternative is an audit/reporting inconsistency, but it does not explain a later persisted read of the lower value; the current write pattern directly does. Confirmation would require concurrent request/database timing or repository traces showing two reads of the same value followed by two writes of that identical next value.

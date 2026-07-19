@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "workflow_id": "publish-queue-bulk-retry",
+  "revision": 0,
+  "graph_digest": null,
+  "updated_at": null,
+  "entries": []
+}

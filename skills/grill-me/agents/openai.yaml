@@ -1,0 +1,4 @@
+interface:
+  display_name: "Grill Me"
+  short_description: "Sharpen a rough idea into vetted, codebase-grounded solution directions"
+  default_prompt: "Use $grill-me to pressure-test this idea and turn it into vetted solution directions grounded in the codebase."

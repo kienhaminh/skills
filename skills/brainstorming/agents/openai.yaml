@@ -1,0 +1,4 @@
+interface:
+  display_name: "Brainstorming"
+  short_description: "Decompose a tangled problem into a labelled problem-tree (Rumsfeld per node), solve the leaves, and converge on a real answer"
+  default_prompt: "Use $brainstorming to break this problem into a labelled problem-tree and reason it through to an answer."

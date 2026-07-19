@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "skill": "debugging",
+  "method": "Independent read-only runs use the same repository-grounded prompt with and without the skill. Agents receive neither checks nor expected answers. Evaluate gpt-5.6-terra at low and medium reasoning.",
+  "runs": [
+    {
+      "case_id": "queued-job-green-health",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "low",
+      "configuration": "with_skill",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": "/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/runs/queued-job-green-health.low.with_skill.md"
+    },
+    {
+      "case_id": "queued-job-green-health",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "low",
+      "configuration": "baseline",
+      "score": 9,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [
+        "alternatives"
+      ],
+      "response_path": "/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/runs/queued-job-green-health.low.baseline.md"
+    },
+    {
+      "case_id": "authorization-redaction",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "low",
+      "configuration": "with_skill",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": "/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/runs/authorization-redaction.low.with_skill.md"
+    },
+    {
+      "case_id": "authorization-redaction",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "low",
+      "configuration": "baseline",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": "/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/runs/authorization-redaction.low.baseline.md"
+    },
+    {
+      "case_id": "green-mock-wrong-shape",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "low",
+      "configuration": "with_skill",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": "/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/runs/green-mock-wrong-shape.low.with_skill.md"
+    },
+    {
+      "case_id": "green-mock-wrong-shape",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "low",
+      "configuration": "baseline",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": "/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/runs/green-mock-wrong-shape.low.baseline.md"
+    },
+    {
+      "case_id": "queued-job-green-health",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "configuration": "with_skill",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": "/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/runs/queued-job-green-health.medium.with_skill.md"
+    },
+    {
+      "case_id": "queued-job-green-health",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "configuration": "baseline",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": "/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/runs/queued-job-green-health.medium.baseline.md"
+    },
+    {
+      "case_id": "authorization-redaction",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "configuration": "with_skill",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": "/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/runs/authorization-redaction.medium.with_skill.md"
+    },
+    {
+      "case_id": "authorization-redaction",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "configuration": "baseline",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": "/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/runs/authorization-redaction.medium.baseline.md"
+    },
+    {
+      "case_id": "green-mock-wrong-shape",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "configuration": "with_skill",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": "/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/runs/green-mock-wrong-shape.medium.with_skill.md"
+    },
+    {
+      "case_id": "green-mock-wrong-shape",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "configuration": "baseline",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": "/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/runs/green-mock-wrong-shape.medium.baseline.md"
+    }
+  ],
+  "summary": {
+    "low": {
+      "with_skill": {
+        "score": 30,
+        "maximum": 30,
+        "pass_count": 3,
+        "case_count": 3
+      },
+      "baseline": {
+        "score": 29,
+        "maximum": 30,
+        "pass_count": 3,
+        "case_count": 3
+      },
+      "skill_score_delta": 1
+    },
+    "medium": {
+      "with_skill": {
+        "score": 30,
+        "maximum": 30,
+        "pass_count": 3,
+        "case_count": 3
+      },
+      "baseline": {
+        "score": 30,
+        "maximum": 30,
+        "pass_count": 3,
+        "case_count": 3
+      },
+      "skill_score_delta": 0
+    }
+  }
+}

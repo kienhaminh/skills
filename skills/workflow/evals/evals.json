@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "skill": "workflow",
+  "cases": [
+    {
+      "id": "implementation-slice",
+      "prompt": "Use $workflow and its bundled workflow template to create an executable graph and local tracking dashboard for adding a locale-aware bulk archive action across shared contracts, the NestJS admin service/controller, the Next.js admin queue UI, and independent verification. Do not implement product code or edit the repository.",
+      "constraints": {
+        "max_token_budget": 12000,
+        "requires_parallel_frontier": true,
+        "requires_product_write_scopes": true
+      }
+    },
+    {
+      "id": "read-only-audit",
+      "prompt": "Use $workflow and its bundled workflow template to create an executable graph and local tracking dashboard for auditing ingestion and publishing documentation against live code, classifying contradictions, proposing disjoint documentation repairs, and independently verifying coverage. Do not edit the repository.",
+      "constraints": {
+        "max_token_budget": 8000,
+        "requires_parallel_frontier": true,
+        "requires_product_write_scopes": false
+      }
+    },
+    {
+      "id": "dependency-repair",
+      "prompt": "Use $workflow and its bundled workflow template to create an executable graph and local tracking dashboard for migrating a search filter through one shared contract, server behavior, web behavior, integration, and verification. Ensure consumers receive only named outputs from dependency ancestors and reserve shared integration surfaces for one node. Do not implement product code or edit the repository.",
+      "constraints": {
+        "max_token_budget": 10000,
+        "requires_parallel_frontier": true,
+        "requires_product_write_scopes": true
+      }
+    },
+    {
+      "id": "detached-activation-lifecycle",
+      "prompt": "Use $workflow to prepare a provider-neutral workflow for adding an authenticated bulk export across a shared contract, NestJS service, Next.js admin UI, integration, verification, and optional ready pull-request delivery. Work only in the provided temporary artifact directory; do not create a real Codex Goal or loop, edit product files, commit, push, or create a PR. Run the sanitized profiler because this caller explicitly requests priced options, write economy/balanced/deep cost-options.json, record a simulated balanced choice and proportionality review, adapt the initial schema-version-1 graph and dashboard without caller bindings, validate it executable, host it on loopback, verify both endpoints, and stop the server. Write result.json exactly to artifact_contract.result_schema: keep ready_frontier at the root and record server.bind, server.port, graph_http, dashboard_http, and stopped under server.",
+      "constraints": {
+        "max_token_budget": 14000,
+        "requires_parallel_frontier": true,
+        "requires_product_write_scopes": true,
+        "requires_detached_activation": true
+      },
+      "required_artifacts": [
+        "machine-profile.json",
+        "repo-profile.json",
+        "cost-options.json",
+        "cost-review.json"
+      ]
+    },
+    {
+      "id": "prototype-gated-ui",
+      "prompt": "Use $workflow and the bundled template to create an executable graph and local dashboard for a locale-aware bulk archive action across shared contracts, NestJS service/controller, Next.js admin queue UI, integration, and independent verification. For this isolated eval, the described selection-confirmation-result flow is an already user-approved intent: adapt the static prototype and manifest, hash the artifact, record approval=user, and make every implementation/integration node descend from the prototype node. Do not implement product code, create a real Goal, or edit outside the artifact directory. Host on loopback, check both endpoints, stop the server, and write result.json.",
+      "phase": "executable",
+      "constraints": {
+        "max_token_budget": 10000,
+        "requires_parallel_frontier": true,
+        "requires_product_write_scopes": true,
+        "requires_prototype": true
+      }
+    },
+    {
+      "id": "deterministic-exemption",
+      "prompt": "Use $workflow and the bundled template to create an executable graph and local dashboard for a deterministic repository-only task: normalize one obsolete documentation link, update its focused link check, and independently verify there are no remaining old targets. No user-visible behavior, public contract, or data semantics change. Use the machine-checkable characterization as the concrete prototype exemption reason; remove the template prototype branch instead of self-approving subjective intent. Do not edit product/repository files or create a real Goal. Host on loopback, check both endpoints, stop the server, and write result.json.",
+      "phase": "executable",
+      "constraints": {
+        "max_token_budget": 5000,
+        "requires_parallel_frontier": false,
+        "requires_product_write_scopes": true,
+        "allows_prototype_exemption": true
+      }
+    },
+    {
+      "id": "calibrated-completion",
+      "prompt": "Use $workflow and the bundled template to produce a completed read-only audit graph for this skill's graph contract versus validate_graph.py. Required outcomes: confirm prototype gating is enforced, confirm primary methods are semantically routed, and confirm complete phase rejects required claims without direct evidence. This deterministic audit needs no intent prototype; record a concrete exemption. Run exact checks, save verifier-owned evidence artifacts, create exactly one verified primary claim per requirement, and add one optional unverified performance claim so verification.outcome is complete_with_limits. Set lifecycle and all non-expansion nodes complete, validate --phase complete, host the dashboard on loopback, verify both endpoints, stop it, and write result.json with an empty ready_frontier. Do not edit the skill or repository.",
+      "phase": "complete",
+      "constraints": {
+        "max_token_budget": 7000,
+        "requires_parallel_frontier": false,
+        "requires_product_write_scopes": false,
+        "requires_calibrated_limits": true
+      }
+    },
+    {
+      "id": "shared-memory-handoff",
+      "prompt": "Use $workflow and its bundled template to create an executable graph and local dashboard for adding a locale-aware search sort option through a shared contract, independent server and web producers, integration, and verification. Treat the described ascending/descending selector as an already user-approved intent and adapt/hash the prototype. Initialize graph shared memory. Record at least two scoped entries through worker-style memory deltas with direct artifact digests, then generate bounded capsules for two downstream nodes so they receive relevant shared state without the full event log. Deliberately submit one stale-revision delta and confirm it is rejected without changing state. Validate graph and memory, verify event replay, host graph/dashboard/memory on loopback, check endpoints, stop the server, and write result.json. Do not create a real Goal, edit the repository, commit, push, or create a PR.",
+      "phase": "executable",
+      "constraints": {
+        "max_token_budget": 9000,
+        "requires_parallel_frontier": true,
+        "requires_product_write_scopes": true,
+        "requires_shared_memory_handoff": true
+      }
+    }
+  ],
+  "artifact_contract": {
+    "required": [
+      "graph.json",
+      "dashboard/index.html",
+      "dashboard/app.js",
+      "dashboard/styles.css",
+      "result.json"
+    ],
+    "result_schema": {
+      "case_id": "string",
+      "used_template": "boolean",
+      "server": {
+        "bind": "127.0.0.1",
+        "port": "integer",
+        "graph_http": 200,
+        "dashboard_http": 200,
+        "memory_http": 200,
+        "stopped": true
+      },
+      "ready_frontier": ["node-id"],
+      "notes": ["string"]
+    }
+  }
+}

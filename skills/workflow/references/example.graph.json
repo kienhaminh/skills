@@ -1,0 +1,234 @@
+{
+  "version": 1,
+  "workflow_id": "search-filter",
+  "lifecycle": {
+    "status": "ready"
+  },
+  "objective": {
+    "statement": "Users can filter search results by province through one shared contract.",
+    "requirements": [
+      {
+        "id": "R1",
+        "text": "Define the province filter contract.",
+        "acceptance": ["The shared contract rejects invalid province identifiers."]
+      },
+      {
+        "id": "R2",
+        "text": "Apply the filter in server search.",
+        "acceptance": ["The focused server test returns only matching provinces."]
+      },
+      {
+        "id": "R3",
+        "text": "Expose the filter in the web search UI.",
+        "acceptance": ["The focused web test sends the selected province."]
+      }
+    ],
+    "out_of_scope": ["Changing search ranking"]
+  },
+  "constraints": {
+    "max_parallel": 2,
+    "token_budget": 8000
+  },
+  "intent_baseline": {
+    "required": true,
+    "status": "approved",
+    "manifest": ".codex/workflows/search-filter/prototype/manifest.json",
+    "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "approval": "user",
+    "not_required_reason": null
+  },
+  "verification": {
+    "outcome": "pending",
+    "claims": []
+  },
+  "shared_memory": {
+    "schema_version": 1,
+    "policy": "blackboard-event-sourcing-v1",
+    "state": "memory/state.json",
+    "events": "memory/events.jsonl",
+    "capsules": "memory/capsules"
+  },
+  "optional_work": [],
+  "nodes": [
+    {
+      "id": "A",
+      "title": "Partition the search-filter goal",
+      "kind": "expand",
+      "operations": ["decomposition"],
+      "methods": ["MECE", "Rumsfeld Matrix", "YAGNI"],
+      "status": "expanded",
+      "isolation": "coordinator",
+      "parent": null,
+      "depends_on": [],
+      "skills": [],
+      "covers": [],
+      "scope": {
+        "read": ["packages/contracts", "apps/server", "apps/web"],
+        "write": [],
+        "artifacts": [],
+        "decisions": [],
+        "forbidden": ["database migrations"]
+      },
+      "consumes": [],
+      "outputs": [],
+      "acceptance": ["Children partition all goal requirements."],
+      "budget": {"tokens": 300},
+      "retry": {"attempts": 1, "max_attempts": 2, "last_failure_class": null}
+    },
+    {
+      "id": "P",
+      "title": "Approve the province-filter intent baseline",
+      "kind": "execute",
+      "operations": ["prototyping"],
+      "methods": ["Throwaway Prototyping", "YAGNI"],
+      "status": "complete",
+      "isolation": "shared-readonly",
+      "parent": "A",
+      "depends_on": [],
+      "skills": [],
+      "covers": [],
+      "scope": {
+        "read": ["apps/web/app/[locale]/search"],
+        "write": [],
+        "artifacts": [".codex/workflows/search-filter/prototype"],
+        "decisions": ["intent.search.province-filter"],
+        "forbidden": ["product code edits"]
+      },
+      "consumes": [],
+      "outputs": [
+        {
+          "id": "province-filter-intent-baseline",
+          "description": "Approved filter flow and state baseline",
+          "artifact": ".codex/workflows/search-filter/prototype/manifest.json"
+        }
+      ],
+      "acceptance": ["Baseline digest matches the approved prototype."],
+      "budget": {"tokens": 200},
+      "retry": {"attempts": 1, "max_attempts": 2, "last_failure_class": null}
+    },
+    {
+      "id": "B",
+      "title": "Define the shared province-filter contract",
+      "kind": "execute",
+      "operations": ["implementation"],
+      "methods": ["Contract Testing", "DRY", "YAGNI"],
+      "status": "complete",
+      "isolation": "worktree",
+      "parent": "A",
+      "depends_on": ["P"],
+      "skills": ["implement"],
+      "covers": ["R1"],
+      "scope": {
+        "read": ["docs/CONVENTIONS.md", "packages/contracts"],
+        "write": ["packages/contracts/src/search.ts"],
+        "artifacts": [],
+        "decisions": ["contract.search.province-filter"],
+        "forbidden": ["apps/server", "apps/web"]
+      },
+      "consumes": [],
+      "outputs": [
+        {
+          "id": "province-filter-contract",
+          "description": "Validated shared request contract",
+          "artifact": "packages/contracts/src/search.ts"
+        }
+      ],
+      "acceptance": ["Focused contract tests pass."],
+      "budget": {"tokens": 2000},
+      "retry": {"attempts": 1, "max_attempts": 2, "last_failure_class": null}
+    },
+    {
+      "id": "C",
+      "title": "Apply the province filter in server search",
+      "kind": "execute",
+      "operations": ["implementation"],
+      "methods": ["TDD", "Boundary Value Analysis", "YAGNI"],
+      "status": "pending",
+      "isolation": "worktree",
+      "parent": "A",
+      "depends_on": ["B"],
+      "skills": ["implement"],
+      "covers": ["R2"],
+      "scope": {
+        "read": ["docs/CONVENTIONS.md", "packages/contracts/src/search.ts", "apps/server/src/knowledge"],
+        "write": ["apps/server/src/knowledge/search"],
+        "artifacts": [],
+        "decisions": ["backend.search.province-filter"],
+        "forbidden": ["apps/web"]
+      },
+      "consumes": ["province-filter-contract"],
+      "outputs": [
+        {
+          "id": "server-province-filter",
+          "description": "Tested server-side filter behavior",
+          "artifact": "apps/server/src/knowledge/search"
+        }
+      ],
+      "acceptance": ["Focused server search tests pass."],
+      "budget": {"tokens": 2500},
+      "retry": {"attempts": 0, "max_attempts": 2, "last_failure_class": null}
+    },
+    {
+      "id": "D",
+      "title": "Expose the province filter in web search",
+      "kind": "execute",
+      "operations": ["implementation"],
+      "methods": ["YAGNI", "KISS", "DRY"],
+      "status": "pending",
+      "isolation": "worktree",
+      "parent": "A",
+      "depends_on": ["B"],
+      "skills": ["implement"],
+      "covers": ["R3"],
+      "scope": {
+        "read": ["docs/CONVENTIONS.md", "packages/contracts/src/search.ts", "apps/web/app/[locale]/search"],
+        "write": ["apps/web/app/[locale]/search/province-filter.tsx"],
+        "artifacts": [],
+        "decisions": ["ui.search.province-filter"],
+        "forbidden": ["apps/server"]
+      },
+      "consumes": ["province-filter-contract"],
+      "outputs": [
+        {
+          "id": "web-province-filter",
+          "description": "Tested province-filter UI",
+          "artifact": "apps/web/app/[locale]/search/province-filter.tsx"
+        }
+      ],
+      "acceptance": ["Focused web search tests pass."],
+      "budget": {"tokens": 2500},
+      "retry": {"attempts": 0, "max_attempts": 2, "last_failure_class": null}
+    },
+    {
+      "id": "E",
+      "title": "Verify the integrated search filter",
+      "kind": "verify",
+      "operations": ["verification"],
+      "methods": ["Popperian Falsification", "Negative Testing", "Evidence Hierarchy"],
+      "status": "pending",
+      "isolation": "shared-readonly",
+      "parent": "A",
+      "depends_on": ["C", "D"],
+      "skills": [],
+      "covers": [],
+      "scope": {
+        "read": ["packages/contracts/src/search.ts", "apps/server/src/knowledge/search", "apps/web/app/[locale]/search"],
+        "write": [],
+        "artifacts": [".codex/workflows/search-filter/evidence"],
+        "decisions": ["verification.search.province-filter"],
+        "forbidden": ["unrelated source files"]
+      },
+      "consumes": ["server-province-filter", "web-province-filter"],
+      "outputs": [
+        {
+          "id": "search-filter-verification",
+          "description": "Integrated verification evidence",
+          "artifact": ".codex/workflows/search-filter/evidence/summary.json"
+        }
+      ],
+      "acceptance": ["Contract, server, and web focused checks pass together."],
+      "budget": {"tokens": 500},
+      "retry": {"attempts": 0, "max_attempts": 2, "last_failure_class": null}
+    }
+  ]
+}

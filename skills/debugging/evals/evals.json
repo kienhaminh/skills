@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "skill": "debugging",
+  "method": "Independent read-only runs use the same repository-grounded prompt with and without the skill. Agents receive neither checks nor expected answers. Evaluate gpt-5.6-terra at low and medium reasoning.",
+  "pass_threshold": 8,
+  "maximum_per_case": 10,
+  "models": [
+    {"model": "gpt-5.6-terra", "reasoning_effort": "low"},
+    {"model": "gpt-5.6-terra", "reasoning_effort": "medium"}
+  ],
+  "cases": [
+    {
+      "id": "queued-job-green-health",
+      "prompt": "Work read-only in /Users/kien.ha/Code/vietnam. Diagnose only: the stack was started with `pnpm dev`; an ingestion submission returns a job ID; `/health` is green; the job remains queued and no ingestion output appears. Determine the root cause from the current checkout, state confidence and remaining uncertainty, and do not propose a fix or change files.",
+      "checks": [
+        {"id": "root-cause", "points": 2, "groups": [["worker.*not.*running", "does not start.*worker", "missing worker", "no worker"]]},
+        {"id": "entrypoint-grounding", "points": 1, "groups": [["worker\\.ts", "dev:worker"], ["main\\.ts", "API entrypoint", "HTTP API", "server API"]]},
+        {"id": "health-scope", "points": 1, "groups": [["health.*database", "health.*Postgres", "health.*not.*worker"]]},
+        {"id": "causal-chain", "points": 2, "groups": [["enqueue", "job ID", "pg-boss"], ["consumer", "drain", "claim"], ["remain.*queued", "stays.*queued"]]},
+        {"id": "alternatives", "points": 1, "groups": [["database.*failure", "enqueue.*failure", "handler.*failure", "alternative"]]},
+        {"id": "uncertainty", "points": 1, "groups": [["uncertain", "not inspect", "not verified", "assuming", "confidence"]]},
+        {"id": "evidence-bound", "points": 1, "groups": [["evidence", "supported", "current.*script", "current.*checkout"]]},
+        {"id": "diagnose-only", "points": 1, "forbidden": ["you should", "recommend", "to fix", "next step", "run `pnpm --filter server dev:worker`"]}
+      ]
+    },
+    {
+      "id": "authorization-redaction",
+      "prompt": "Work read-only in /Users/kien.ha/Code/vietnam. Diagnose only: a bearer-authenticated request to a protected local API route returns 200, while the structured request log shows Authorization as empty/redacted. A teammate says the proxy dropped the header before authentication. Determine what happened from the current checkout, state confidence and remaining uncertainty, and do not propose a fix or change files.",
+      "checks": [
+        {"id": "root-cause", "points": 2, "groups": [["pino.*redact", "logger.*redact", "redact.*authorization"]]},
+        {"id": "config-grounding", "points": 1, "groups": [["req\\.headers\\.authorization", "app\\.module\\.ts", "redact:"]]},
+        {"id": "auth-evidence", "points": 2, "groups": [["200"], ["protected"], ["validat", "accept", "authenticat"]]},
+        {"id": "causal-chain", "points": 1, "groups": [["serializ", "log output", "logging", "logger.*redact"], ["raw header", "live header", "request header", "in-memory request", "same.*header"]]},
+        {"id": "reject-drop", "points": 1, "groups": [["not.*dropped", "did not drop", "could not have removed", "against.*dropped", "dropped.*would"]]},
+        {"id": "uncertainty", "points": 1, "groups": [["uncertain", "assuming", "if.*public", "current checkout", "confidence"]]},
+        {"id": "artifact-vs-defect", "points": 1, "groups": [["artifact", "observability", "log.*not.*authentication", "logging.*not.*runtime", "log representation", "redaction.*not.*mutation", "redaction affects.*log", "redaction.*not.*bug"]]},
+        {"id": "diagnose-only", "points": 1, "forbidden": ["you should", "recommend", "to fix", "next step", "disable redaction", "remove redact"]}
+      ]
+    },
+    {
+      "id": "green-mock-wrong-shape",
+      "prompt": "Work read-only in /Users/kien.ha/Code/vietnam. Diagnose only this incident: a knowledge-search unit test is green with a hand-written SearchResultEnricher fake returning `{ excerptId, score }`; the real enricher and runtime results return `{ id, type, title, snippet, score }`; production reads `excerptId` and gets undefined; type-check reports the mismatch. A teammate blames Postgres. Determine the root cause, separate trigger/symptom/cause, state confidence and remaining uncertainty, and do not propose a fix or change files.",
+      "checks": [
+        {"id": "root-cause", "points": 2, "groups": [["fake.*wrong.*shape", "mock.*wrong.*shape", "invented.*shape", "fake.*invent", "test double.*invent", "test double.*contract", "contract.*mismatch"]]},
+        {"id": "shape-grounding", "points": 1, "groups": [["excerptId"], ["real.*id", "returns.*id", "runtime.*id"]]},
+        {"id": "false-green", "points": 1, "groups": [["false.green", "green.*mock", "test.*passes.*fake", "green.*test.*not", "passed only because", "made.*assumption.*valid", "test was green.*production"]]},
+        {"id": "causal-chain", "points": 2, "groups": [["fake", "mock", "test double"], ["production", "runtime"], ["undefined"]]},
+        {"id": "typecheck-signal", "points": 1, "groups": [["type-check", "typecheck", "type error", "TypeScript.*report", "compiler.*report"]]},
+        {"id": "reject-postgres", "points": 1, "groups": [["not.*Postgres", "Postgres.*not", "database.*not", "reject.*Postgres"]]},
+        {"id": "classification", "points": 1, "groups": [["trigger"], ["symptom"], ["root cause", "cause"]]},
+        {"id": "diagnose-only", "points": 1, "forbidden": ["you should", "recommend", "to fix", "next step", "must update", "must replace"]}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+# Evidence calibration — anti-overconfidence contract
+
+## Evidence Hierarchy + Bayesian Updating
+
+Prefer evidence matching the claim: end-to-end observation, integration test, focused test, static check, code inspection, producer assertion. Update confidence only when evidence changes likelihood.
+
+| State | Confidence cap | Meaning |
+| --- | --- | --- |
+| `verified` | `high` or `medium` | Direct check covers the exact integrated claim |
+| `observed` | `medium` or `low` | Direct check covers a narrower case |
+| `inferred` | `low` | Only indirect support |
+| `unverified` | `none` | Missing, blocked, or contradictory check |
+
+Producer completion, confidence, test existence, and code inspection are not test execution. Never turn unavailable evidence into a pass.
+
+## Machine record
+
+The verifier owns explicit evidence paths and writes root `verification.claims`:
+
+```json
+{
+  "id": "C-R1",
+  "requirement_id": "R1",
+  "statement": "Exact claim",
+  "state": "verified",
+  "confidence": "high",
+  "evidence": [{"check": "pnpm test --filter contract", "artifact": "evidence/r1.json"}],
+  "limitations": []
+}
+```
+
+- A claim with `requirement_id` is primary. Complete phase requires exactly one primary, `verified` claim per requirement.
+- `verified` and `observed` require direct evidence; every evidence artifact must lie inside a verify node's owned write/artifact scope.
+- Extra claims use `requirement_id: null`. Non-verified extras force `verification.outcome: complete_with_limits` but do not invalidate completed required outcomes.
+- If a required claim cannot be verified, keep the graph blocked; do not run complete phase.
+
+## Popperian Falsification
+
+Give a fresh verifier requirements, approved baseline, integrated artifacts, and known limits—never producer reasoning. Seek counterexamples through negative, boundary, differential, metamorphic, concurrency, or permission checks as applicable. Record rejected alternatives and unresolved unknowns without narrative padding.
+
+Report calibrated language: “verified by…”, “observed for…”, “inferred because…”, or “not verified; limit…”.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Worktree"
+  short_description: "Coordinate isolated Git worktrees in parallel"
+  default_prompt: "Use $worktree to create isolated worktrees and run tests or debugging across them in parallel."

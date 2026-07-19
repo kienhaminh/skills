@@ -1,0 +1,184 @@
+{
+  "version": 1,
+  "skill": "debugging",
+  "method": "Independent read-only static-analysis runs over isolated fixtures. Same prompt with and without the skill; no rubric or expected answer is shown. gpt-5.6-terra low and medium reasoning.",
+  "runs": [
+    {
+      "case_id": "lost-update",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "low",
+      "configuration": "with_skill",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": ".codex/skills/debugging/evals/complex/runs/lost-update.low.with_skill.md"
+    },
+    {
+      "case_id": "lost-update",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "low",
+      "configuration": "baseline",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": ".codex/skills/debugging/evals/complex/runs/lost-update.low.baseline.md"
+    },
+    {
+      "case_id": "retry-side-effect",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "low",
+      "configuration": "with_skill",
+      "score": 9,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [
+        "invariant"
+      ],
+      "response_path": ".codex/skills/debugging/evals/complex/runs/retry-side-effect.low.with_skill.md"
+    },
+    {
+      "case_id": "retry-side-effect",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "low",
+      "configuration": "baseline",
+      "score": 9,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [
+        "invariant"
+      ],
+      "response_path": ".codex/skills/debugging/evals/complex/runs/retry-side-effect.low.baseline.md"
+    },
+    {
+      "case_id": "tenant-cache",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "low",
+      "configuration": "with_skill",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": ".codex/skills/debugging/evals/complex/runs/tenant-cache.low.with_skill.md"
+    },
+    {
+      "case_id": "tenant-cache",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "low",
+      "configuration": "baseline",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": ".codex/skills/debugging/evals/complex/runs/tenant-cache.low.baseline.md"
+    },
+    {
+      "case_id": "lost-update",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "configuration": "with_skill",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": ".codex/skills/debugging/evals/complex/runs/lost-update.medium.with_skill.md"
+    },
+    {
+      "case_id": "lost-update",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "configuration": "baseline",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": ".codex/skills/debugging/evals/complex/runs/lost-update.medium.baseline.md"
+    },
+    {
+      "case_id": "retry-side-effect",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "configuration": "with_skill",
+      "score": 7,
+      "maximum": 10,
+      "passed": false,
+      "failed_checks": [
+        "root-cause",
+        "invariant"
+      ],
+      "response_path": ".codex/skills/debugging/evals/complex/runs/retry-side-effect.medium.with_skill.md"
+    },
+    {
+      "case_id": "retry-side-effect",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "configuration": "baseline",
+      "score": 6,
+      "maximum": 10,
+      "passed": false,
+      "failed_checks": [
+        "retry-boundary",
+        "invariant",
+        "diagnose-only"
+      ],
+      "response_path": ".codex/skills/debugging/evals/complex/runs/retry-side-effect.medium.baseline.md"
+    },
+    {
+      "case_id": "tenant-cache",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "configuration": "with_skill",
+      "score": 9,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [
+        "invariant"
+      ],
+      "response_path": ".codex/skills/debugging/evals/complex/runs/tenant-cache.medium.with_skill.md"
+    },
+    {
+      "case_id": "tenant-cache",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "medium",
+      "configuration": "baseline",
+      "score": 10,
+      "maximum": 10,
+      "passed": true,
+      "failed_checks": [],
+      "response_path": ".codex/skills/debugging/evals/complex/runs/tenant-cache.medium.baseline.md"
+    }
+  ],
+  "summary": {
+    "low": {
+      "with_skill": {
+        "score": 29,
+        "maximum": 30,
+        "pass_count": 3,
+        "case_count": 3
+      },
+      "baseline": {
+        "score": 29,
+        "maximum": 30,
+        "pass_count": 3,
+        "case_count": 3
+      },
+      "skill_score_delta": 0
+    },
+    "medium": {
+      "with_skill": {
+        "score": 26,
+        "maximum": 30,
+        "pass_count": 2,
+        "case_count": 3
+      },
+      "baseline": {
+        "score": 26,
+        "maximum": 30,
+        "pass_count": 2,
+        "case_count": 3
+      },
+      "skill_score_delta": 0
+    }
+  }
+}

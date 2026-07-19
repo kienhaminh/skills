@@ -1,0 +1,5 @@
+Diagnosis — high confidence, analysis-derived: this is a lost-update race in `CounterService.increment`. The service performs a non-atomic read–compute–write sequence with awaits between each stage. Under concurrency, two requests can both read value N, both emit their audit event, each compute N + 1, and then each successfully write N + 1. The final stored value is therefore one increment short even though both requests and both audit events succeeded.
+
+The violated invariant is that every successful increment must contribute exactly once to the durable counter value; the current repository contract provides separate `read` and `write` operations, with no transaction, conditional update, or atomic increment boundary visible here.
+
+The strongest alternative—one request being dropped or an audit-only failure—does not fit the successful requests, two audit events, absence of repository errors, and later persisted lower value. Confirmation would require concurrent request/database traces showing both reads at the same value followed by duplicate writes of the same next value. Repository implementation semantics remain the only material uncertainty.

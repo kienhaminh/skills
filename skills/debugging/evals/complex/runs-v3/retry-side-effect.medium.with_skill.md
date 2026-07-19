@@ -1,0 +1,5 @@
+Diagnosis — high confidence (static analysis; the timeout timing is not runtime-verified): the worker has a retry-unsafe side-effect boundary. It sends the email, then records the job as processed. If `processed.insert(job.id)` times out after `mailer.send` succeeds, the queue sees the attempt as failed and retries the entire handler (up to three times). The retry sends the same email again; once its insert succeeds, the queue correctly reports completion.
+
+The violated invariant is that a retried job must not repeat an externally visible notification. A processed-job row records only that a later attempt completed; it cannot prove the email was sent exactly once. This matches the incident sequence: successful send, database timeout, then eventual completion with exactly one row.
+
+The strongest alternative is duplicate queue delivery. It is less consistent with the evidence because the configured retry path alone explains both the timeout and final completion. Remaining uncertainty is whether the timeout occurred before or after the database committed; confirming that timing and the queue's retry log would establish the exact attempt count.

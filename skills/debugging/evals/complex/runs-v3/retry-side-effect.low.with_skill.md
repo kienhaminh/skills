@@ -1,0 +1,5 @@
+Diagnosis (high confidence, analysis-derived): a database timeout after `mailer.send` turns a successfully delivered email into a failed job attempt. The queue retries it, and `handle` sends the email again before recording any durable evidence that the job was already processed. The later attempt can insert the single processed-job row and complete, so that row proves only eventual completion—not that no earlier email was sent.
+
+The violated invariant is that an externally visible side effect must not be retried without a durable, atomic idempotency decision. Here the side effect precedes the persistence boundary, and the worker never reads the processed-job state before sending.
+
+The strongest alternative is duplicate delivery by the mail provider. It is less consistent with the reported sequence: the code performs one send per attempt, while the timeout supplies a direct reason for a retry and the final processed row. It cannot be ruled out without provider delivery identifiers and queue attempt history. Timing around whether the timed-out insert committed is also unverified; either outcome leaves the pre-send retry boundary unsafe.

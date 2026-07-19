@@ -1,0 +1,280 @@
+{
+  "version": 1,
+  "skill": "worktree",
+  "method": "Independent read-only agents receive the same repository-grounded task. with_skill runs receive only the skill path in addition to the task; baseline runs do not. Agents do not receive the rubric or expected answer.",
+  "pass_threshold": 8,
+  "maximum_per_case": 10,
+  "cases": [
+    {
+      "id": "parallel-feature-dev",
+      "prompt": "In /Users/kien.ha/Code/vietnam, plan the exact safe commands to create two Git worktrees from the current dev branch for search-ranking and map-rendering, assign one agent to each, run the repository's supported tests concurrently, and debug the API and web app for both worktrees at the same time. Inspect the live checkout and authoritative repository docs. Include a resource-allocation matrix, safety gates, and handoff evidence. Keep this task strictly read-only: do not create or remove worktrees, edit files or Git metadata, install dependencies, or start services. Respond in English.",
+      "checks": [
+        {
+          "id": "provenance",
+          "description": "Inspect path, branch, HEAD, upstream, and dirty state before acting",
+          "points": 1,
+          "groups": [
+            ["worktree list --porcelain", "worktree_matrix\\.py[\\s\\S]*inventory"],
+            ["HEAD"],
+            ["dirty", "status --short", "status --porcelain"]
+          ]
+        },
+        {
+          "id": "safe-creation",
+          "description": "Use unique codex branches and an ignored or sibling worktree path from a verified base",
+          "points": 1,
+          "groups": [
+            ["codex/search-ranking"],
+            ["codex/map-rendering"],
+            ["vietnam-worktrees", "sibling", "\\.codex/worktrees"],
+            ["worktree add[\\s\\S]{0,100}-b"]
+          ]
+        },
+        {
+          "id": "ignored-local-artifacts",
+          "description": "Account for ignored lockfile and project-local skill files",
+          "points": 1,
+          "groups": [
+            ["pnpm-lock\\.yaml"],
+            ["\\.codex", "absolute.*skill", "absolute.*worktree_matrix"]
+          ]
+        },
+        {
+          "id": "supported-tests",
+          "description": "Use server unit tests and honest web verification",
+          "points": 1,
+          "groups": [
+            ["pnpm --filter server test", "--filter server test"],
+            ["web.*type-check", "--filter web type-check"],
+            ["web.*no.*test", "no.*unit test.*web", "web.*has no tests", "no web unit-test"]
+          ]
+        },
+        {
+          "id": "runtime-isolation",
+          "description": "Allocate distinct ports, env, and databases",
+          "points": 2,
+          "groups": [
+            ["8110", "8100.*8200", "API.*port"],
+            ["3110", "3100.*3200", "web.*port"],
+            ["DATABASE_URL", "database"],
+            ["CORS_ORIGINS"],
+            ["API_URL"]
+          ]
+        },
+        {
+          "id": "compose-collision",
+          "description": "Detect fixed Compose container name and host port",
+          "points": 1,
+          "groups": [
+            ["container_name", "vft-postgres", "existing Postgres container"],
+            ["5434"],
+            ["one.*Postgres", "shared Postgres", "compose.*cannot.*parallel", "override"]
+          ]
+        },
+        {
+          "id": "agent-ownership",
+          "description": "Give each agent one worktree and require evidence-rich handoff",
+          "points": 1,
+          "groups": [
+            ["one.*worktree", "one worktree.*agent", "agent.*worktree"],
+            ["changed files", "dirty status", "commands run", "handoff"]
+          ]
+        },
+        {
+          "id": "parallel-runner",
+          "description": "Use explicit selected paths and isolated logs for concurrent commands",
+          "points": 1,
+          "groups": [
+            ["worktree_matrix\\.py[\\s\\S]*run"],
+            ["--worktree"],
+            ["log", "summary\\.json"]
+          ]
+        },
+        {
+          "id": "read-only-integrity",
+          "description": "State that evaluation commands were not executed",
+          "points": 1,
+          "groups": [
+            ["read-only", "not executed", "nothing was executed", "did not.*create", "no changes were made"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "parallel-integration-debug",
+      "prompt": "In /Users/kien.ha/Code/vietnam, design a read-only execution plan for three feature worktrees that must run database integration tests concurrently while two of them also debug stuck ingestion jobs. Inspect current repository docs and configuration. Give exact commands, per-worktree resource isolation, evidence collection, and a method for diagnosing failures that appear only under concurrency. Do not create worktrees, databases, containers, or processes, and do not edit anything. Respond in English.",
+      "checks": [
+        {
+          "id": "test-database-isolation",
+          "description": "Allocate a distinct protected test database per worktree",
+          "points": 2,
+          "groups": [
+            ["TEST_DATABASE_URL"],
+            ["_test"],
+            ["three.*database", "per-worktree.*database", "distinct.*database", "separate.*database", "every worktree.*own.*database", "database.*worktree-specific"]
+          ]
+        },
+        {
+          "id": "integration-command",
+          "description": "Use the supported integration-test command",
+          "points": 1,
+          "groups": [
+            ["pnpm --filter server test:int", "--filter server test:int"]
+          ]
+        },
+        {
+          "id": "compose-topology",
+          "description": "Account for fixed container name and port instead of launching three Compose stacks",
+          "points": 1,
+          "groups": [
+            ["container_name", "vft-postgres", "existing Postgres container"],
+            ["5434"],
+            ["one Postgres", "shared Postgres", "existing Postgres container", "not.*three.*compose", "cannot.*parallel", "all five databases may share"]
+          ]
+        },
+        {
+          "id": "queue-worker",
+          "description": "Start the worker explicitly for stuck jobs",
+          "points": 1,
+          "groups": [
+            ["dev:worker", "start:worker"],
+            ["pnpm dev.*does not.*worker", "root.*dev.*worker", "worker.*separate", "dedicated terminal[\\s\\S]{0,80}worker"]
+          ]
+        },
+        {
+          "id": "deterministic-ai",
+          "description": "Remove LLM nondeterminism from unrelated debugging",
+          "points": 1,
+          "groups": [
+            ["AI_PROVIDER=mock"]
+          ]
+        },
+        {
+          "id": "parallel-evidence",
+          "description": "Capture per-worktree commands, HEADs, exit codes, and logs",
+          "points": 1,
+          "groups": [
+            ["worktree_matrix\\.py[\\s\\S]*run", "parallel", "concurrent"],
+            ["HEAD"],
+            ["exit"],
+            ["log"]
+          ]
+        },
+        {
+          "id": "parallel-only-triage",
+          "description": "Rerun a failing worktree alone before blaming code",
+          "points": 1,
+          "groups": [
+            ["rerun.*alone", "run.*alone", "serial.*rerun", "individually", "rerun only.*worktree", "only the failing worktree"]
+          ]
+        },
+        {
+          "id": "collision-model",
+          "description": "Test shared-resource hypotheses one at a time",
+          "points": 1,
+          "groups": [
+            ["port"],
+            ["database"],
+            ["cache", "temp"],
+            ["memory", "CPU", "resource pressure"]
+          ]
+        },
+        {
+          "id": "read-only-integrity",
+          "description": "State that the plan did not mutate runtime or repository state",
+          "points": 1,
+          "groups": [
+            ["read-only", "not executed", "nothing was executed", "did not.*start", "no changes were made", "no repository[\\s\\S]{0,100}changed or started"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "safe-cleanup-handoff",
+      "prompt": "In /Users/kien.ha/Code/vietnam, provide a read-only runbook for an agent coordinating cleanup after several parallel worktree tasks. One worktree may contain unrelated dirty edits, one path may be missing but still registered, and one clean feature branch may have been pushed but not merged. Explain exactly what to inspect, what can and cannot be removed, how to handle stale metadata and branches, and what final evidence to report. Do not remove, prune, commit, push, or edit anything. Respond in English.",
+      "checks": [
+        {
+          "id": "fresh-inventory",
+          "description": "Inventory path, branch, HEAD, upstream, dirty, locked, and prunable state",
+          "points": 1,
+          "groups": [
+            ["worktree list --porcelain", "worktree_matrix\\.py[\\s\\S]*inventory"],
+            ["HEAD"],
+            ["upstream"],
+            ["dirty"],
+            ["prunable", "locked"]
+          ]
+        },
+        {
+          "id": "dirty-preservation",
+          "description": "Treat unknown dirty edits as occupied and non-removable",
+          "points": 2,
+          "groups": [
+            ["dirty.*occupied", "do not remove.*dirty", "preserve.*dirty", "unknown.*changes", "dirty worktree must not", "leave the dirty worktree[\\s\\S]{0,40}untouched"],
+            ["owner", "provenance", "intended diff"]
+          ]
+        },
+        {
+          "id": "clean-removal-gate",
+          "description": "Remove only a clean worktree whose branch fate is established",
+          "points": 1,
+          "groups": [
+            ["git worktree remove", "worktree removal", "remove.*worktree"],
+            ["clean"],
+            ["merged", "pushed", "disposable"]
+          ]
+        },
+        {
+          "id": "pushed-not-merged",
+          "description": "Do not equate pushed with merged or delete the branch automatically",
+          "points": 1,
+          "groups": [
+            ["pushed.*not.*merged", "not merged", "retain.*branch", "do not delete.*branch"]
+          ]
+        },
+        {
+          "id": "prune-dry-run",
+          "description": "Preview stale metadata pruning before mutation",
+          "points": 1,
+          "groups": [
+            ["worktree prune[\\s\\\\]*--dry-run"]
+          ]
+        },
+        {
+          "id": "no-force",
+          "description": "Refuse force removal for unknown changes",
+          "points": 1,
+          "groups": [
+            ["never.*--force", "do not.*--force", "no.*--force", "without --force"]
+          ]
+        },
+        {
+          "id": "process-ownership",
+          "description": "Stop only processes owned by the exact worktree",
+          "points": 1,
+          "groups": [
+            ["stop.*owned", "owned process", "process group", "session identifier", "only.*process.*worktree.*stopped"]
+          ]
+        },
+        {
+          "id": "branch-separation",
+          "description": "Treat worktree removal, pruning, and branch deletion as separate scoped actions",
+          "points": 1,
+          "groups": [
+            ["branch deletion", "git branch -d", "delete.*branch"],
+            ["separate", "does not delete.*branch", "after.*worktree"]
+          ]
+        },
+        {
+          "id": "final-evidence",
+          "description": "Report the remaining matrix and retained branches",
+          "points": 1,
+          "groups": [
+            ["remaining.*worktree", "remaining matrix", "final inventory", "final table", "before-and-after worktree inventory"],
+            ["retained.*branch", "branches.*retained", "unmerged branch was retained", "items intentionally retained"]
+          ]
+        }
+      ]
+    }
+  ]
+}
