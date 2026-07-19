@@ -11,7 +11,10 @@
   "scripts": {
     "changeset": "changeset",
     "version": "changeset version",
-    "check:changeset": "node scripts/check-changeset.mjs"
+    "check:changeset": "node scripts/check-changeset.mjs",
+    "link:project": "node scripts/link-skills.mjs",
+    "unlink:project": "node scripts/link-skills.mjs --unlink",
+    "doctor:project": "node scripts/link-skills.mjs --check"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.7.0",

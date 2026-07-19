@@ -26,3 +26,13 @@ Do not create a Changeset for CI-only changes, local tooling, or a change that n
 4. Merging that release pull request creates the Git tag.
 
 Never combine an ordinary feature change with generated version/changelog files unless you are intentionally merging the release pull request.
+
+## Real-project validation
+
+Develop and evaluate skills from this repository. Do not copy a draft skill into another repository. Link the source directory into the target project's local skill directory instead:
+
+```sh
+npm run link:project -- --project /absolute/path/to/project --agent codex --skill debugging
+```
+
+The linker refuses to replace a non-library skill. Use a fresh agent task after linking so the target harness discovers the current source. Follow [docs/REAL_PROJECT_EVALS.md](./docs/REAL_PROJECT_EVALS.md) for baseline-versus-skill evaluation and preserve only sanitized local artifacts.
