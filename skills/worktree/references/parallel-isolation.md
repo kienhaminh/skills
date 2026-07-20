@@ -1,6 +1,7 @@
 # Parallel isolation
 
-Use this checklist whenever two worktrees execute code concurrently.
+Use this checklist whenever two or more worktrees execute code concurrently, including builds,
+tests, servers, containers, migrations, or debugging.
 
 | Resource | Safe rule | Collision signal |
 | --- | --- | --- |
@@ -21,11 +22,14 @@ Create a small allocation table before launching long-lived or stateful commands
 
 ```text
 slot  worktree                 api   web   database             compose
-0     /abs/repo-wt/feature-a   8100  3100  vietnam_v3_test_a    vietnam-a
-1     /abs/repo-wt/feature-b   8200  3200  vietnam_v3_test_b    vietnam-b
+0     /abs/repo-wt/feature-a   8100  3100  app_test_a           app-a
+1     /abs/repo-wt/feature-b   8200  3200  app_test_b           app-b
 ```
 
-Use the application's real environment variable names rather than assuming `PORT` controls every process. Confirm health endpoints return the expected branch or build when possible.
+Use the application's real environment variable names. Pass per-worktree values with
+`worktree_matrix.py run --slot-env KEY=<template>`; templates may use `{slot}`, `{name}`,
+`{port_offset}`, `{path}`, `{branch}`, and `{head}` and are passed without shell evaluation. Confirm
+health endpoints return the expected branch or build when possible.
 
 For database tests, preserve the repository's safety suffix and guard conventions. Never point a destructive test harness at a development, shared, staging, or production database. Apply migrations independently to each disposable database.
 

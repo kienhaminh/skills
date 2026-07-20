@@ -791,6 +791,20 @@ def main() -> int:
             raise ValueError(f"question gate is not locked: {output}")
         graph = workflow_state.read_graph(graph_path)
         verify_executors(workflow_dir, graph)
+        delivery_preflight = delivery_broker.preflight(
+            workflow_dir,
+            repo_root,
+            persist=not args.dry_run,
+        )
+        if delivery_preflight["status"] == "waiting_external":
+            if not args.dry_run:
+                set_lifecycle(graph_path, "waiting")
+            print(json.dumps({
+                "workflow_id": graph.get("workflow_id"),
+                "status": "waiting_external",
+                "blocker": delivery_preflight["failure"],
+            }, indent=2))
+            return 0
         if args.dry_run:
             print(json.dumps({"workflow_id": graph.get("workflow_id"), "ready": workflow_state.ready_ids(graph), "goal_required": False}, indent=2))
             return 0

@@ -1,0 +1,14 @@
+{
+  "evaluated_at": "2026-07-20",
+  "method": "Fresh agents ran the current skill on one read-only mixed-stack fixture and one explicitly authorized rehabilitation fixture.",
+  "status": "pass",
+  "evidence": [
+    "discovered Python, Rust, and nested Node command surfaces",
+    "treated CONTRIBUTING.md as the only repository instruction without requiring an agent-file pair",
+    "content query found duplicate-email retry ownership",
+    "reported missing locks, pins, CI, and runnable gates as limitations",
+    "left HEAD and the working tree unchanged in audit-only mode",
+    "in mutation mode ran the existing test before and after, changed only README.md, and deleted only the proved-unreferenced legacy.tmp",
+    "performed no install, network access, or commit"
+  ]
+}

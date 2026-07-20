@@ -1,0 +1,14 @@
+{
+  "evaluated_at": "2026-07-20",
+  "method": "Fresh agents exercised meaningful-red and unavailable-infrastructure branches with the current skill.",
+  "status": "pass",
+  "evidence": [
+    "enumerated tested, excluded, and open dispositions",
+    "kept notification behavior and unsafe-integer range open",
+    "ran 5 tests with 2 meaningful red quota-rejection assertions",
+    "left production code and the story unchanged",
+    "created only test/quota.test.mjs and stopped before implementation in the red case",
+    "created only the repository-owned reservation integration test in the infrastructure case",
+    "reported written-unverified after the documented harness exited unavailable, invented no credential, and withheld implementation handoff"
+  ]
+}

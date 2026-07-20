@@ -43,7 +43,7 @@ Generate one record for every supported source file:
   "sha256": "checkout-derived",
   "keywords": ["publish", "snapshot", "service"],
   "symbols": [{"name": "PublishService", "kind": "class", "line": 21}],
-  "imports": ["@vietnam/db", "./common/publish-policy"],
+  "imports": ["@acme/db", "./common/publish-policy"],
   "referenced_by": ["apps/server/src/publish/publish.controller.ts"],
   "related_tests": ["apps/server/src/publish/publish.service.spec.ts"]
 }

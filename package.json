@@ -9,6 +9,7 @@
   },
   "license": "MIT",
   "scripts": {
+    "check:skills": "node scripts/audit-skills.mjs",
     "changeset": "changeset",
     "version": "changeset version",
     "check:changeset": "node scripts/check-changeset.mjs",

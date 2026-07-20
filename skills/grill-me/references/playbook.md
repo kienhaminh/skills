@@ -17,23 +17,21 @@ The prompt never covers what the user didn't think to say. Skim the touched file
   effects. Design-changing ones become questions; the rest go to pre-mortems or
   Expansions parked — never silently dropped.
 
-One AskUserQuestion round of 3–4 questions; a second round only if answers
-contradict. Aim each question with a named technique:
+Use one user-input round of three or four questions; use a second round only when answers contradict.
+Aim each question with a named technique:
 
 - **5 Whys** — the goal behind the ask: what becomes possible once this is done?
 - **MoSCoW** — must / should / won't for this iteration; Won't blocks scope creep.
-- **Constraints** — perf, deadline; in this repo the MVP scope cap
-  (`docs/PLANS.md`, "Respect the project's scope cap").
+- **Constraints** — performance, deadline, compatibility, and the repository's declared scope cap.
 - **Done test** — one observable behavior proving it works.
 
-Options do half the grilling: 2–4 concrete repo-real answers per question, one
-marked (Recommended) — that's why you skimmed first. The user picks; never make
-them write an essay. Don't ask anything the codebase can answer.
+Options do half the grilling: give two to four concrete repository-grounded answers per question and
+mark one **(Recommended)**. Use checkout evidence for questions the codebase can answer.
 
 ## 2. Ground
 
-**Repo-state check first** — research built on the wrong tree is worse than none:
-every citation looks precise, and every one misleads.
+**Source-state check first** — research built on the wrong source is worse than none. In the wrong
+Git checkout, every citation looks precise and every one misleads.
 
 1. *Where am I* — `git rev-parse --show-toplevel && git branch --show-current`;
    detached HEAD or unexpected path → find out why before reading code.
@@ -45,12 +43,14 @@ every citation looks precise, and every one misleads.
    never touch the user's own checkout.
 4. *Dirty state* — `git status --short`; uncommitted changes ARE current reality.
 
-In the user's own interactive checkout, checks 1–2 suffice. Then:
+In the user's own interactive Git checkout, always perform checks 1 and 4; compare tips when the user
+named a branch, upstream, or other freshness target. For a non-Git source, record the absolute root
+plus the strongest available provenance marker—package version, archive digest, generated manifest,
+release tag, or file timestamps—and state that branch/upstream freshness cannot be proved. Then:
 
-- `docs/README.md` ranks which sources to trust. `docs/plans/tech-debt.md` lists
-  known debt — don't propose "fixing" it, don't be surprised type-check is red.
-- Every current-state claim cites `file:line` or command + output. "It seems" is
-  banned.
+- Read the repository's trust order and known-debt owner when present. Treat recorded debt as context,
+  not surprise scope.
+- Cite every current-state claim with `file:line` or command output.
 - **Premise check.** Verify in code that the problem behaves as the user says; a
   wrong premise often yields the sharpest direction (e.g. a "semantic or fuzzy
   search?" ask dissolved once code showed search was already hybrid — the real bug

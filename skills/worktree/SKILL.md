@@ -1,25 +1,17 @@
 ---
 name: worktree
-description: Coordinate multiple Git worktrees with explicit ownership and isolated runtime state. Use when agents create, inspect, test, debug, run services in, compare, or clean concurrent worktrees, especially when branches, ports, env, databases, containers, caches, or logs could collide.
+description: Coordinate multiple Git worktrees with explicit ownership and isolated runtime state. Use when concurrent agents or tasks create, inspect, test, debug, compare, integrate, or clean worktrees whose branches, ports, databases, containers, caches, or logs could collide.
 ---
 
-# Worktree
+# Coordinate isolated worktrees
 
-Treat every worktree as one attributable environment: absolute path, branch or commit, owner, purpose, and mutable-resource allocation.
+Treat each worktree as one attributable environment: absolute path, branch or commit, owner, purpose,
+and mutable-resource allocation.
 
-## Keep these invariants
+## 1. Inventory before action
 
-- Read repository instructions before acting. For this repository, use `docs/TESTING.md`, `docs/DEBUG.md`, and `docs/plans/tech-debt.md` for supported commands and known failures.
-- Recheck path, branch, HEAD, upstream, and dirty state immediately before editing, testing, committing, pushing, integrating, or removing.
-- Assign one branch and one worktree to one agent. Never share a writable checkout or generated output.
-- Treat an unknown dirty worktree as occupied; preserve its changes and establish ownership.
-- Isolate every mutable resource. Share only proven read-only or content-addressed caches.
-- Refuse concurrent mutation of an external service when no namespace or disposable fixture isolates it.
-- Keep merge, rebase, commit, push, branch deletion, and integration with the coordinator unless the user explicitly requests them.
-
-Read [parallel-isolation.md](references/parallel-isolation.md) before running servers, containers, migrations, database tests, or stateful debugging concurrently.
-
-## Inspect and create
+Read repository instructions and supported test/debug commands. Recheck path, branch, HEAD, upstream,
+and dirty state immediately before any edit, test, commit, integration, or cleanup.
 
 ```bash
 git status --short --branch
@@ -28,23 +20,48 @@ git branch -vv
 python3 <skill-dir>/scripts/worktree_matrix.py inventory --repo <repo>
 ```
 
-Before creating a worktree:
+Treat unknown dirty state as occupied and preserve it. Complete inventory when every worktree has a
+branch or detached commit and dirty state, while owner, purpose, and resource allocation are either
+proved or explicitly `unknown` with the evidence or decision needed to resolve them.
 
-1. Verify the base branch or commit, unique `codex/<task-slug>` branch, and unused absolute path.
-2. Follow the repository's location convention. Use `<repo>/.worktrees` only when ignored; otherwise prefer a sibling path.
-3. Run `git worktree add -b <branch> <path> <base>`.
-4. Audit ignored or untracked prerequisites because new worktrees contain only committed files. Deliberately recreate or copy needed lockfiles, env files, fixtures, and local helpers without staging secrets.
-5. Install dependencies per worktree, then inventory again.
+After inventory, execute only the branches the request needs: **create**, **inspect/compare**,
+**run/debug**, **integrate**, or **clean up**. Creation is not a prerequisite for existing worktrees;
+cleanup is not a post-step for read-only inspection.
 
-Never reuse a dirty path, attach one branch twice, nest under an unignored directory, or share writable dependencies.
+## 2. Create one isolated environment
 
-## Delegate
+1. Verify the base ref, unique branch, and unused absolute path.
+2. Follow repository conventions when present. Otherwise propose an unused sibling path and a
+   task-derived branch, and confirm any choice that changes shared naming or retention policy.
+3. Create the worktree with `git worktree add`.
+4. Recreate required ignored or untracked prerequisites without staging secrets.
+5. When the selected command requires dependencies, use the repository's discovered install command
+   inside that worktree; otherwise leave dependency state unchanged. Inventory again.
 
-Give each agent exactly one worktree and bounded scope. Include absolute path, branch, verified HEAD, owned files or subsystem, forbidden scope, checks, and handoff contract. Send a complete task brief, not the parent conversation. Keep shared integration surfaces under one owner.
+Assign one writable worktree and branch to one owner. Keep merge, rebase, shared-ref mutation, and
+integration with the coordinator unless the user delegates them explicitly.
 
-## Run concurrently
+Complete creation when the registered path, ref, owner, prerequisites, dependency state, and dirty
+baseline are proved.
 
-Run the same command across explicitly selected registered worktrees:
+## 3. Isolate mutable resources
+
+Read [parallel-isolation.md](references/parallel-isolation.md) before any concurrent execution,
+including builds and tests as well as servers, containers, migrations, or stateful debugging.
+Allocate non-overlapping ports, disposable databases or schemas, Compose project names, writable
+caches, test outputs, logs, and temp paths.
+Share only resources proved read-only or content-addressed. Serialize mutation when an external
+service cannot be namespaced safely.
+
+Complete isolation when every mutable resource has one owner or an explicit serial schedule.
+
+## 4. Delegate and run
+
+Give each agent a complete task brief containing absolute worktree path, branch, verified HEAD, owned
+scope, forbidden scope, checks, and handoff contract. Pass the task brief rather than parent-chat
+history.
+
+Run the same command across selected registered worktrees:
 
 ```bash
 python3 <skill-dir>/scripts/worktree_matrix.py run \
@@ -52,25 +69,40 @@ python3 <skill-dir>/scripts/worktree_matrix.py run \
   --worktree <path-a> \
   --worktree <path-b> \
   --max-parallel 2 \
+  --slot-env APP_PORT={port_offset} \
+  --slot-env TEST_DATABASE=app_test_{slot} \
   -- <supported-command>
 ```
 
-The runner writes per-worktree logs and `summary.json`, and exports `WORKTREE_SLOT`, `WORKTREE_NAME`, and `WORKTREE_PORT_OFFSET`. Map these to real application variables. For different commands or long-running services, use one tracked session per worktree and stop only its process group.
+Map slot templates to the application's real variable names. Supported fields are `{slot}`, `{name}`,
+`{port_offset}`, `{path}`, `{branch}`, and `{head}`; values are passed directly without shell
+evaluation. Prefer an explicit coordinator-owned `--log-dir`. When the helper creates a system-temp
+log directory, treat its logs and `summary.json` as retained evidence and return an explicit retention
+or removal decision.
 
-Attribute every result to path and HEAD. If failure occurs only in parallel, preserve evidence and rerun that worktree alone before blaming code; then vary one shared resource at a time.
+Attribute every result to path and HEAD. Preserve a parallel-only failure, rerun that worktree alone,
+then vary one shared resource at a time.
 
-## Return compact evidence
+Complete execution when each selected worktree has a command result, log path, and classified blocker
+or success.
 
-Store full logs, screenshots, and reports as files. Return one row per worktree:
+## 5. Return and clean up
+
+Return one compact row per worktree:
 
 ```text
 path | branch@HEAD | dirty | changed files | command:exit | log | blocker
 ```
 
-Default to 1,000 words or fewer. Use one matrix and parameterized command templates instead of repeating per-worktree scripts. Name package-scoped checks and unavailable test surfaces; in this repository, include server tests, web type-check, and the fact that web has no unit-test script. Add at most three findings: first diverging mechanism, unavailable check, and remaining risk. Do not paste full logs unless requested.
+Name relevant checks and unavailable surfaces discovered from the repository. Keep full logs and
+screenshots in files; report the first diverging mechanism and remaining risk.
 
-Before returning a plan, explicitly confirm its topology: no collision-prone Compose stacks, distinct per-worktree `_test` databases, and only processes owned by the exact worktree may be stopped. For cleanup, show `git worktree prune --dry-run` on one line. For a read-only plan, end with: `Nothing was executed; no repository, Git metadata, process, database, or remote state changed.`
+Before cleanup, inventory again and stop only processes attributable to the exact worktree. Present
+the exact paths, processes, evidence/log directories, worktree removals, pruning, and branch
+deletions, then obtain authorization for each requested destructive action class. Remove a clean
+worktree only after its branch is merged, retained upstream, or explicitly disposable. Show
+`git worktree prune --dry-run` before authorized pruning and treat evidence removal, worktree removal,
+pruning, and branch deletion as separate actions.
 
-## Clean up
-
-Inventory again, stop only processes owned by the exact worktree, and inspect its status. Remove only a clean worktree whose branch fate is established as merged, safely retained upstream, or explicitly disposable. Never use `--force` for dirty or unknown changes. Run `git worktree prune --dry-run` before authorized pruning. Treat worktree removal, pruning, and branch deletion as separate scoped actions. End with the remaining worktree matrix and retained branches.
+The skill is complete when the final matrix accounts for every worktree and retained branch, and no
+process or mutable resource owned by another task was changed.

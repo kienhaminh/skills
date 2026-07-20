@@ -1,73 +1,67 @@
 ---
 name: tdd
-description: Turn one user story into an exhaustive test list and meaningful failing tests, without production implementation. Use for TDD, tests-first, test-case enumeration, or requests to convert a story into tests. Consume stories from $stories when available and hand red tests to $implement.
+description: Test-first an agreed behavior by enumerating its contract and producing meaningful failing tests; hand a proved red contract to $implement.
 ---
 
-# User story to failing tests
+# Produce a meaningful red contract
 
-Produce the red starting point: an agreed test list, runnable tests, and only the minimal stub needed
-for meaningful failures. Stop before production implementation.
+Deliver an agreed test list, runnable tests, and only the minimal stub required for meaningful
+failures. Production behavior remains for implementation.
 
-## Select one story
+## 1. Select one behavior
 
-Use a pasted story or one story from `docs/plans/stories/<slug>.md`. Identify its actor, capability,
-acceptance criteria, constraints, and open questions. If several stories are possible and the request
-does not select one, ask which to use.
+Use a pasted story or one selected from the repository's backlog. Identify actor, capability,
+acceptance criteria, constraints, and open questions. Resolve story selection when several candidates
+exist. Route missing acceptance criteria through `$stories` when the user wants them derived.
 
-If acceptance criteria are absent, stop and invoke `$stories` when the user wants them derived.
-Do not invent tests against an unagreed target.
+Complete selection when one agreed behavior and its observable boundaries are explicit.
 
-## Enumerate before writing
+## 2. Enumerate before editing
 
-Read [situation-catalogue.md](references/situation-catalogue.md) completely. Walk every applicable
-row and give it one explicit disposition:
+Read [situation-catalogue.md](references/situation-catalogue.md) completely. Walk every applicable row
+and assign one disposition:
 
-- **test** - write a test for the situation;
-- **excluded** - use one allowed catalogue reason and name the owning layer or existing test.
+- **test** — the accepted contract defines the outcome; write a test;
+- **excluded** — use an allowed catalogue reason and name the owning layer or existing test;
+- **open** — the situation is applicable but expected behavior is not agreed; resolve it before
+  writing that test.
 
-Start from the acceptance criteria, then add applicable unhappy, boundary, authorization,
-concurrency, persistence, queue, and cross-cutting cases from the catalogue. Present the list for the
-user to veto before editing files.
+Start with acceptance criteria, then add applicable unhappy, boundary, authorization, concurrency,
+persistence, async, and cross-cutting cases. Mark inferred cases separately. Present the list for user
+review before editing files when new inferred behavior materially expands the contract.
 
-Use this schema:
+```text
+# | Situation | Case type | Level | Source | Disposition
+```
 
-| # | Situation | Case type | Level | Source | Disposition |
-| --- | --- | --- | --- | --- | --- |
+The catalogue supplies probes, not default product policy. Complete enumeration when every applicable
+row has an explicit disposition and every material `open` row is resolved or returned as a contract
+blocker.
 
-Mark inferred cases separately from acceptance-criterion cases. A catalogue row left silent is a
-coverage gap.
+## 3. Write meaningful failures
 
-## Write meaningful red tests
+Read the repository's testing guide when present for placement, naming, commands, infrastructure, and
+invariants.
 
-Read `docs/TESTING.md` for file placement, naming, commands, infrastructure, and repository-specific
-invariants. The repository guide wins on mechanics.
+- Test observable behavior with one claim per test.
+- Choose the lowest level that exercises the real subject.
+- Keep a real database, queue, filesystem, or network boundary when the criterion depends on it.
+- For new code, add only the real signature and a `not implemented` stub needed to compile.
+- For existing code, let assertions fail against current behavior when possible.
 
-- Test observable behaviour, not private calls or implementation order.
-- Give each test one behaviour claim and a descriptive name.
-- Choose the lowest level that exercises the real subject. If the criterion concerns SQL, queue
-  delivery, or another real dependency, do not fake that dependency away.
-- For new code, add only the real signature and a `not implemented` stub so the suite compiles.
-- For existing code, add no stub when the assertion can fail against current behaviour.
-- Never write production logic or weaken an agreed criterion.
+Complete writing when every `test` disposition maps to one runnable test and production logic remains
+unchanged.
 
-## Prove the red state
+## 4. Prove red
 
-Run the exact focused command from `docs/TESTING.md` and inspect every failure. Accept only:
+Run the focused repository command and inspect every failure. Accept an assertion mismatch caused by
+missing behavior or the deliberate minimal-stub failure. Repair imports, type errors, broken fixtures,
+and unrelated failures before handoff. When required infrastructure is unavailable after exhausting
+repository-supported setup, finish as `written-unverified`, name the blocker, and withhold a proved-red
+handoff.
 
-- an assertion mismatch caused by missing behaviour; or
-- the deliberate `not implemented` failure from the minimal stub.
-
-Fix broken imports, type errors, incorrect fakes, and unrelated failures before handoff. If required
-infrastructure is unavailable, report the affected tests as written-but-unrun, never as proven red.
-
-## Hand off
-
-Return:
-
-- test and stub paths plus the exact run command;
-- the test-list dispositions, including explicit exclusions;
-- key failure lines and why each red is meaningful;
-- inferred unhappy paths, integration-level tests, ambiguity, and unavailable infrastructure;
-- the contract `$implement` must satisfy without changing the tests.
-
-Leave the story unchanged and the production behaviour unwritten.
+The proved-red branch is complete when each written test is meaningfully red for the intended missing
+behavior. The limited branch is complete when every written test is mapped to its intended failure
+but unavailable infrastructure is explicitly unverified. In both branches report paths, command,
+dispositions, observed failures, inferred cases, unavailable checks, and whether `$implement` has a
+proved contract or must wait.

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "workflow_id": "publish-queue-bulk-retry",
-  "graph_digest": "sha256:95d9eeafdb67a46ec02436dfa58742591d52375f0b64c6a3223e0aee93bea004",
+  "graph_digest": null,
   "methods": ["Rumsfeld Matrix", "Value of Information", "Reversibility", "Premortem"],
   "reviewer": {
     "agent_id": "template-independent-question-reviewer",
@@ -11,11 +11,11 @@
     "context_policy": "fresh-artifacts-only"
   },
   "challenges": [
-    {"class": "misread-intent", "result": "clear", "rationale": "Template objective, requirements, and approved prototype agree."},
-    {"class": "hidden-dependency", "result": "clear", "rationale": "Template dependencies and named handoffs cover the required path."},
-    {"class": "oracle-gap", "result": "clear", "rationale": "Every template requirement has a locked critical check."}
+    {"class": "misread-intent", "result": "pending", "rationale": "Fresh independent review required."},
+    {"class": "hidden-dependency", "result": "pending", "rationale": "Fresh independent review required."},
+    {"class": "oracle-gap", "result": "pending", "rationale": "Fresh independent review required."}
   ],
   "findings": [],
-  "status": "passed",
-  "reviewed_at": "2026-07-19T00:00:00Z"
+  "status": "draft",
+  "reviewed_at": null
 }

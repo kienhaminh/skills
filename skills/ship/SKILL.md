@@ -1,49 +1,50 @@
 ---
 name: ship
-description: Land finished work in the Vietnam monorepo through Gate, Record, Commit, and Publish. Use when the user asks to ship, close, commit and push, or open a PR for completed work. Not for implementation, diagnosis, standalone docs sync, or review of an existing PR.
+description: Land finished work in a Git repository through Gate, Record, Commit, and Publish. Use when the user asks to close completed work, commit and push it, or open a pull request; use repository review workflows for reviewing an existing PR.
 ---
 
-# Ship
+# Ship finished work
 
-Close completed work in this order: **Gate -> Record -> Commit -> Publish**. Read
-[playbook.md](references/playbook.md) for exact commands and repository-specific mechanics.
+Apply **Gate → Record → Commit → Publish**. Read
+[playbook.md](references/playbook.md) for repository discovery and command mechanics.
 
 ## Gate
 
-Inspect branch, dirty state, existing commits, and any active plan. Run every applicable gate from the
-playbook: type-check, focused tests, changed-flow verification, and code review.
+Inspect repository instructions, branch or commit, upstream, dirty state, existing commits, and task
+records. Discover the repository's actual build, static-check, test, changed-flow verification, and
+review gates. Run every applicable required gate against the tree that will be shipped.
 
-Stop on a red or unavailable required gate. Report the blocker; do not record completion, commit, or
-publish. For already-committed work with no fresh task diff, gate the merged branch state and explain
-why diff-specific review or verification does not apply.
+A red required gate keeps the work in progress. An unavailable required gate becomes a named blocker;
+an unavailable optional surface becomes a reported limitation.
+
+Complete Gate when each applicable check has a fresh result tied to the intended tree.
 
 ## Record
 
-When this work used an active plan:
+Follow the repository's task-record lifecycle. When an active plan or equivalent drove the work,
+record a factual dated outcome, move it to the repository's completed state, remove only debt resolved
+by this change, and add a lesson only when the task produced a reusable reasoning rule.
 
-1. prepend a factual dated Outcome;
-2. move the plan from `docs/plans/active/` to `docs/plans/completed/`;
-3. remove resolved tech-debt entries;
-4. add a lesson only when the task produced a reusable reasoning rule.
+For work already recorded elsewhere, use the existing record and avoid creating empty ceremony.
+Route durable business-document changes through the repository's documentation-sync process.
 
-Do not create a plan, Outcome, lesson, or empty commit for work already recorded elsewhere. Do not
-edit `docs/design/domain.md` directly; invoke `$sync-docs` for durable business changes.
+Complete Record when the final tree contains an accurate durable account of what landed and what was
+cut.
 
 ## Commit
 
-Stage only the intended code and record files. Follow the repository's recent Conventional Commit
-style and cite the governing plan or decision when one exists. Recheck the staged diff before
-committing.
+Stage only intended implementation and record files. Derive commit style from repository policy and
+recent history. Recheck the staged diff, then create the minimum coherent commit set authorized by the
+user.
+
+Complete Commit when committed content equals the gated tree and unrelated working-tree changes
+remain preserved.
 
 ## Publish
 
-Never publish from `master` into `master`. Prepare the final commit subject and PR title/body, show
-them to the user, and obtain one confirmation before push and PR creation. Then follow the playbook,
-prove the remote ref, and return the PR URL.
+Use the discovery, confirmation, mutation, and idempotency mechanics in
+[playbook.md](references/playbook.md). Execute only the requested publish actions; commit, push,
+pull-request, merge, and deploy authority are independent.
 
-Commit, push, and PR authority do not imply merge or deploy authority.
-
-## Finish
-
-Report the landed commit/PR, gate evidence, recorded plan or lesson changes, and any unrun check or
-remaining risk. Keep the conversation in the user's language and repository artifacts in English.
+Shipping is complete when the requested local commit, pushed branch, or pull request exists at its
+proved SHA, all gate evidence and limitations are reported, and task records match that tree.

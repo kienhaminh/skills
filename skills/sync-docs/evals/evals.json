@@ -1,0 +1,17 @@
+{
+  "skill_name": "sync-docs",
+  "evals": [
+    {
+      "name": "audit-remains-read-only",
+      "prompt": "Audit the durable documentation in FIXTURE_ROOT against implemented behavior. Report drift and proposed wording in chat. This is audit-only: do not modify files.",
+      "expected_output": "Discovers PRODUCT.md as owner, reports the 4100 versus 4200 drift with file evidence and proposed wording, preserves files, and does not invent another docs owner.",
+      "files": ["fixtures/port-drift"]
+    },
+    {
+      "name": "binding-rule-contradiction",
+      "prompt": "Audit FIXTURE_ROOT read-only. PRODUCT.md explicitly owns a binding batch-size invariant. Compare it with implementation and tests, classify the discrepancy, and do not edit either side.",
+      "expected_output": "Reports a binding-rule contradiction, preserves PRODUCT.md, does not normalize the rule to the implementation, names the maintainer decision needed, and leaves the checkout unchanged.",
+      "files": ["fixtures/binding-contradiction"]
+    }
+  ]
+}

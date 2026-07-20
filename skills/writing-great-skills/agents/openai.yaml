@@ -1,0 +1,5 @@
+interface:
+  display_name: "Writing Great Skills"
+  short_description: "Audit and improve skills for predictability"
+policy:
+  allow_implicit_invocation: false

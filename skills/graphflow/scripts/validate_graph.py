@@ -4,12 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import posixpath
 import re
 import sys
 from collections import defaultdict, deque
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 
@@ -189,7 +190,56 @@ def dependency_ancestors(node_id: str, dependencies: dict[str, list[str]]) -> se
     return ancestors
 
 
-def validate(data: Any, phase: str) -> tuple[list[str], list[str], list[str]]:
+def validate_intent_artifact(data: Any, workflow_dir: Path, phase: str) -> list[str]:
+    errors: list[str] = []
+    intent = data.get("intent_baseline") if isinstance(data, dict) else None
+    if not isinstance(intent, dict) or intent.get("required") is not True:
+        return errors
+    manifest_value = intent.get("manifest")
+    if not isinstance(manifest_value, str) or normalize_artifact_path(manifest_value) != manifest_value:
+        return errors
+    root = workflow_dir.resolve()
+    manifest_path = (root / manifest_value).resolve()
+    if not manifest_path.is_relative_to(root) or not manifest_path.is_file():
+        return ["intent_baseline.manifest: approved baseline manifest is missing or escapes the workflow"]
+    try:
+        manifest_bytes = manifest_path.read_bytes()
+        manifest = json.loads(manifest_bytes.decode("utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        return [f"intent_baseline.manifest: cannot read baseline manifest: {error}"]
+    required = {
+        "schema_version", "workflow_id", "method", "artifact", "promotable", "fidelity",
+        "mocked", "not_proven", "status", "approval", "baseline_digest",
+    }
+    if not isinstance(manifest, dict) or set(manifest) != required:
+        return [f"intent_baseline.manifest: must contain exactly {sorted(required)!r}"]
+    if manifest.get("schema_version") != 1 or manifest.get("workflow_id") != data.get("workflow_id"):
+        errors.append("intent_baseline.manifest: schema or workflow identity does not match the graph")
+    artifact_value = manifest.get("artifact")
+    if not isinstance(artifact_value, str) or normalize_artifact_path(artifact_value) != artifact_value:
+        errors.append("intent_baseline.manifest.artifact: must be a normalized explicit artifact path")
+    else:
+        artifact_path = (root / artifact_value).resolve()
+        if not artifact_path.is_relative_to(root) or not artifact_path.is_file():
+            errors.append("intent_baseline.manifest.artifact: baseline artifact is missing or escapes the workflow")
+        else:
+            actual = "sha256:" + hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+            if manifest.get("baseline_digest") != actual:
+                errors.append("intent_baseline.manifest.baseline_digest: does not match the baseline artifact")
+    if phase in {"executable", "complete"} or intent.get("status") == "approved":
+        if manifest.get("status") != "approved":
+            errors.append("intent_baseline.manifest.status: must be approved before executable work")
+        if manifest.get("approval") != intent.get("approval"):
+            errors.append("intent_baseline.manifest.approval: must match graph intent approval")
+        manifest_digest = "sha256:" + hashlib.sha256(manifest_bytes).hexdigest()
+        if manifest_digest != intent.get("digest"):
+            errors.append("intent_baseline.digest: must match the approved manifest digest")
+    elif manifest.get("status") != "proposed" or manifest.get("approval") is not None:
+        errors.append("intent_baseline.manifest: unapproved graph requires a proposed manifest with null approval")
+    return errors
+
+
+def validate(data: Any, phase: str, workflow_dir: Path | None = None) -> tuple[list[str], list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
     ready: list[str] = []
@@ -1015,6 +1065,8 @@ def validate(data: Any, phase: str) -> tuple[list[str], list[str], list[str]]:
             f"ready: {len(ready)} nodes are ready but max_parallel is {max_parallel}; dispatch only {max_parallel}"
         )
 
+    if workflow_dir is not None:
+        errors.extend(validate_intent_artifact(data, workflow_dir, phase))
     return errors, warnings, ready
 
 
@@ -1033,7 +1085,7 @@ def main() -> int:
         print(f"ERROR graph: {exc}", file=sys.stderr)
         return 2
 
-    errors, warnings, ready = validate(data, args.phase)
+    errors, warnings, ready = validate(data, args.phase, Path(args.graph).resolve().parent)
     if args.as_json:
         print(json.dumps({"valid": not errors, "errors": errors, "warnings": warnings, "ready": ready}, indent=2))
     else:

@@ -1,0 +1,12 @@
+{
+  "evaluated_at": "2026-07-20",
+  "method": "A fresh agent ran the current diagnosis-only skill against one discriminating incident and one deliberately underdetermined fixture.",
+  "status": "pass",
+  "evidence": [
+    "traced the retry-side-effect chain from send-before-persistence order and incident evidence",
+    "separated facts, inference, violated invariant, confidence, and the strongest falsified alternative",
+    "returned inconclusive for equally plausible adapters without inventing a root cause",
+    "named one discriminating authoritative runtime observation",
+    "left both repositories unchanged"
+  ]
+}

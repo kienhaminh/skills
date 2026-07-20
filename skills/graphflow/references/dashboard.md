@@ -4,10 +4,13 @@ The dashboard is a read-only projection of canonical `graph.json`; it never owns
 
 ## Create + serve
 
-Copy the bundled dashboard unchanged into the workflow artifact:
+The complete workflow template already includes the dashboard. When adding it to an existing
+workflow that lacks one, copy the bundled contents into the destination without nesting another
+`dashboard` directory:
 
 ```bash
-cp -R <skill-dir>/assets/workflow-template/dashboard .codex/workflows/<id>/dashboard
+mkdir -p .codex/workflows/<id>/dashboard
+cp -R <skill-dir>/assets/workflow-template/dashboard/. .codex/workflows/<id>/dashboard/
 python3 <skill-dir>/scripts/serve_dashboard.py serve .codex/workflows/<id> --port 8765 --max-port 8799
 ```
 

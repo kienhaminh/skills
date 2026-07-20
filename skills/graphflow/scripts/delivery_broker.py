@@ -10,6 +10,7 @@ import os
 import re
 import shutil
 import subprocess
+import urllib.parse
 from pathlib import Path
 from typing import Any
 
@@ -28,7 +29,7 @@ DELIVERY_FIELDS = {
 }
 RECORD_FIELDS = {"mode", "active_plan", "completed_plan", "no_plan_reason"}
 COMMIT_FIELDS = {"subject", "body"}
-PR_FIELDS = {"title", "body"}
+PR_FIELDS = {"repository", "title", "body"}
 GRANT_FIELDS = {"capabilities", "request_id", "request_digest", "granted_at"}
 MANIFEST_FIELDS = {
     "schema_version", "workflow_id", "adapter", "graph_digest", "remote", "base_branch", "base_sha",
@@ -41,7 +42,7 @@ PROOF_FIELDS = {
     "pr_state", "published_at",
 }
 SAFE_REF = re.compile(r"^(?![./])(?!.*(?:\.\.|//|@\{|\\|[~^:?*\[]))(?!.*[./]$)[A-Za-z0-9._/-]+$")
-SUBJECT = re.compile(r"^(?:feat|fix|docs|chore|refactor|test|perf)(?:\([a-z0-9._-]+\))?: [a-z0-9][^\n.]{2,70}$")
+HOSTING_REPOSITORY = re.compile(r"^(?:[A-Za-z0-9.-]+/)?[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 SHA = re.compile(r"^[0-9a-f]{40,64}$")
 
 
@@ -118,8 +119,6 @@ def validate_config(value: Any, workflow_id: str) -> dict[str, Any]:
         item = value.get(field)
         if not isinstance(item, str) or not SAFE_REF.fullmatch(item):
             raise ValueError(f"runtime.delivery.{field} is not a safe Git name")
-    if value["remote"] != "origin" or value["base_branch"] != "master":
-        raise ValueError("ship-v1 publishes only through origin with master as the PR base")
     if value["head_branch"] == value["base_branch"]:
         raise ValueError("delivery head branch must differ from the base branch")
     record = value.get("record")
@@ -134,18 +133,23 @@ def validate_config(value: Any, workflow_id: str) -> dict[str, Any]:
         if record.get("no_plan_reason") is not None:
             raise ValueError("completed_plan delivery may not include a no-plan reason")
     commit = value.get("commit")
-    if not isinstance(commit, dict) or set(commit) != COMMIT_FIELDS or not isinstance(commit.get("subject"), str) or not SUBJECT.fullmatch(commit["subject"]):
-        raise ValueError("runtime.delivery.commit must contain a conventional English subject")
-    if not isinstance(commit.get("body"), str) or not commit["body"].strip() or "\x00" in commit["body"]:
-        raise ValueError("runtime.delivery.commit.body must be non-empty")
+    if not isinstance(commit, dict) or set(commit) != COMMIT_FIELDS:
+        raise ValueError("runtime.delivery.commit is invalid")
+    subject = commit.get("subject")
+    if not isinstance(subject, str) or not subject.strip() or "\n" in subject or "\x00" in subject:
+        raise ValueError("runtime.delivery.commit.subject must be one non-empty line")
+    if not isinstance(commit.get("body"), str) or "\x00" in commit["body"]:
+        raise ValueError("runtime.delivery.commit.body must be a string without NUL bytes")
     pull_request = value.get("pull_request")
     if not isinstance(pull_request, dict) or set(pull_request) != PR_FIELDS:
         raise ValueError("runtime.delivery.pull_request is invalid")
-    if pull_request.get("title") != commit["subject"]:
-        raise ValueError("pull request title must equal the commit subject")
-    body = pull_request.get("body")
-    if not isinstance(body, str) or any(heading not in body for heading in ("## Goal", "## What changed", "## Verification")):
-        raise ValueError("pull request body must follow the Ship headings")
+    if not isinstance(pull_request.get("repository"), str) or not HOSTING_REPOSITORY.fullmatch(pull_request["repository"]):
+        raise ValueError("runtime.delivery.pull_request.repository must be [HOST/]OWNER/REPO")
+    title = pull_request.get("title")
+    if not isinstance(title, str) or not title.strip() or "\n" in title or "\x00" in title:
+        raise ValueError("runtime.delivery.pull_request.title must be one non-empty line")
+    if not isinstance(pull_request.get("body"), str) or "\x00" in pull_request["body"]:
+        raise ValueError("runtime.delivery.pull_request.body must be a string without NUL bytes")
     if value.get("required_capabilities") != CAPABILITIES:
         raise ValueError(f"delivery requires the exact Ship capabilities {CAPABILITIES!r}")
     grant = value.get("grant")
@@ -185,6 +189,83 @@ def save_runtime(workflow_dir: Path, runtime: dict[str, Any], delivery: dict[str
         workflow_dir / "runtime" / "delivery" / "events.jsonl",
         {"at": delivery["updated_at"], "status": delivery["status"], "failure": delivery.get("failure")},
     )
+
+
+def hosting_hostname(delivery: dict[str, Any]) -> str:
+    repository = delivery["pull_request"]["repository"]
+    parts = repository.split("/")
+    return parts[0] if len(parts) == 3 else "github.com"
+
+
+def hosting_identity(delivery: dict[str, Any]) -> tuple[str, str, str]:
+    parts = delivery["pull_request"]["repository"].split("/")
+    host, owner, name = parts if len(parts) == 3 else ("github.com", parts[0], parts[1])
+    return host.lower(), owner.lower(), name.removesuffix(".git").lower()
+
+
+def remote_identity(repo_root: Path, remote: str) -> tuple[str, str, str, str]:
+    raw = git(repo_root, "config", "--get", f"remote.{remote}.url")
+    if not raw.strip():
+        raise ValueError("configured delivery remote has no URL")
+    if "://" in raw:
+        parsed = urllib.parse.urlparse(raw)
+        if parsed.scheme not in {"https", "ssh"} or not parsed.hostname:
+            raise ValueError("GitHub delivery remote must use an https or ssh hosting URL")
+        host = parsed.hostname
+        path = parsed.path.lstrip("/")
+    else:
+        match = re.fullmatch(r"(?:[^@/:]+@)?([^/:]+):([^:]+)", raw)
+        if not match:
+            raise ValueError("GitHub delivery remote must identify HOST/OWNER/REPO")
+        host, path = match.groups()
+    segments = path.removesuffix(".git").split("/")
+    if len(segments) != 2 or not all(segments):
+        raise ValueError("GitHub delivery remote must identify exactly OWNER/REPO")
+    return host.lower(), segments[0].lower(), segments[1].lower(), raw
+
+
+def preflight(
+    workflow_dir: Path,
+    repo_root: Path,
+    gh_bin: str | None = None,
+    *,
+    persist: bool = True,
+) -> dict[str, Any]:
+    """Prove the configured GitHub adapter before executable work or remote mutation."""
+    _, runtime, delivery = load_runtime(workflow_dir)
+    if not delivery["required"]:
+        return {"status": "not_required"}
+    authority = runtime.get("authority") if isinstance(runtime.get("authority"), dict) else {}
+    missing_authority = [capability for capability in ("network", "credentials") if authority.get(capability) is not True]
+    if missing_authority:
+        failure = "GitHub delivery preflight requires explicit authority: " + ", ".join(missing_authority)
+        if persist:
+            delivery.update(status="waiting_external", failure=failure)
+            save_runtime(workflow_dir, runtime, delivery)
+        return {"status": "waiting_external", "failure": failure}
+    binary = gh_bin or shutil.which("gh")
+    try:
+        remote_host, remote_owner, remote_name, remote_url = remote_identity(repo_root, delivery["remote"])
+        if (remote_host, remote_owner, remote_name) != hosting_identity(delivery):
+            raise ValueError("configured remote and hosting repository identify different repositories")
+        if not binary:
+            raise ValueError("gh is required for the GitHub Ship adapter")
+        hostname = hosting_hostname(delivery)
+        run(repo_root, [binary, "auth", "status", "--hostname", hostname])
+    except ValueError as error:
+        failure = f"GitHub delivery preflight failed: {error}"
+        if persist:
+            delivery.update(status="waiting_external", failure=failure[:500])
+            save_runtime(workflow_dir, runtime, delivery)
+        return {"status": "waiting_external", "failure": failure[:500]}
+    return {
+        "status": "ready",
+        "adapter": ADAPTER,
+        "hostname": hostname,
+        "repository": delivery["pull_request"]["repository"],
+        "remote": delivery["remote"],
+        "remote_url": remote_url,
+    }
 
 
 def verified_source(workflow_dir: Path, repo_root: Path) -> tuple[Path, str, str, str]:
@@ -429,6 +510,9 @@ def gh_json(repo: Path, gh_bin: str, args: list[str]) -> Any:
 
 
 def publish(workflow_dir: Path, repo_root: Path, gh_bin: str) -> dict[str, Any]:
+    preflight_result = preflight(workflow_dir, repo_root, gh_bin)
+    if preflight_result["status"] != "ready":
+        return preflight_result
     graph, runtime, delivery = load_runtime(workflow_dir)
     assert_graph_complete(graph)
     manifest_path = workflow_dir / delivery["manifest"]
@@ -470,10 +554,10 @@ def publish(workflow_dir: Path, repo_root: Path, gh_bin: str) -> dict[str, Any]:
         raise ValueError("remote branch proof does not match the release commit")
     if ls_remote(verifier_path, manifest["remote"], manifest["base_branch"]) != manifest["base_sha"]:
         raise ValueError("remote base moved during atomic publication; pull-request creation is blocked")
-    run(verifier_path, [gh_bin, "auth", "status"])
+    repository = manifest["pull_request"]["repository"]
     query = [
         "pr", "list", "--head", manifest["head_branch"], "--base", manifest["base_branch"], "--state", "all",
-        "--json", "url,state,headRefOid,title,body,baseRefName,headRefName",
+        "--json", "url,state,headRefOid,title,body,baseRefName,headRefName", "--repo", repository,
     ]
     prs = gh_json(verifier_path, gh_bin, query)
     if not isinstance(prs, list):
@@ -491,14 +575,14 @@ def publish(workflow_dir: Path, repo_root: Path, gh_bin: str) -> dict[str, Any]:
         if pr.get("title") != manifest["pull_request"]["title"] or pr.get("body") != manifest["pull_request"]["body"]:
             run(
                 verifier_path,
-                [gh_bin, "pr", "edit", str(pr_url), "--title", manifest["pull_request"]["title"], "--body", manifest["pull_request"]["body"]],
+                [gh_bin, "pr", "edit", str(pr_url), "--title", manifest["pull_request"]["title"], "--body", manifest["pull_request"]["body"], "--repo", repository],
             )
     else:
         run(
             verifier_path,
             [
                 gh_bin, "pr", "create", "--base", manifest["base_branch"], "--head", manifest["head_branch"],
-                "--title", manifest["pull_request"]["title"], "--body", manifest["pull_request"]["body"],
+                "--title", manifest["pull_request"]["title"], "--body", manifest["pull_request"]["body"], "--repo", repository,
             ],
         )
     final_prs = gh_json(verifier_path, gh_bin, query)
@@ -652,12 +736,12 @@ def projection(workflow_dir: Path) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("prepare", "advance", "inspect"):
+    for name in ("prepare", "advance", "inspect", "preflight"):
         command = commands.add_parser(name)
         command.add_argument("workflow_dir", type=Path)
         if name != "inspect":
             command.add_argument("--repo-root", type=Path, required=True)
-        if name == "advance":
+        if name in {"advance", "preflight"}:
             command.add_argument("--gh-bin")
     args = parser.parse_args()
     workflow_dir = args.workflow_dir.resolve()
@@ -666,6 +750,8 @@ def main() -> int:
             result = prepare(workflow_dir, args.repo_root.resolve())
         elif args.command == "advance":
             result = advance(workflow_dir, args.repo_root.resolve(), args.gh_bin)
+        elif args.command == "preflight":
+            result = preflight(workflow_dir, args.repo_root.resolve(), args.gh_bin)
         else:
             result = projection(workflow_dir)
     except ValueError as error:

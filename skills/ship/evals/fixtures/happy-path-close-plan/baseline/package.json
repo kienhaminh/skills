@@ -1,0 +1,9 @@
+{
+  "name": "ship-eval-happy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "type-check": "node --check src/paginate.mjs",
+    "test": "node --test"
+  }
+}

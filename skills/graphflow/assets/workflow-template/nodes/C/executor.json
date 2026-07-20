@@ -11,7 +11,7 @@
   "requires_authority": ["local_write"],
   "resources": [
     {"path": "nodes/node-result.schema.json", "digest": "sha256:9ff27ce7cfd16cc2ebc75d24c1d87a66b16fc7460a6cebef728fe428ca4edff0"},
-    {"path": "nodes/C/prompt.md", "digest": "sha256:f0579591f34fd94f891e523aa39f541c9461ab07c3421d9252ea1526459ddef7"}
+    {"path": "nodes/C/prompt.md", "digest": "sha256:2be05879e41c603d9cb41af7eead1c11eba9376206f41be189c03ac2f09b1ecd"}
   ],
   "prompt": "nodes/C/prompt.md",
   "model": "gpt-5.6-terra",

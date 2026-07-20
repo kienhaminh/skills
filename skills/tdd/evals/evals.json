@@ -1,0 +1,17 @@
+{
+  "skill_name": "tdd",
+  "evals": [
+    {
+      "name": "red-with-open-semantics",
+      "prompt": "In FIXTURE_ROOT, convert STORY.md into a complete test disposition and meaningful red tests. The notification outcome is deliberately unspecified: keep it open and do not encode policy. Stop before production implementation.",
+      "expected_output": "Enumerates applicable situations, writes quota boundary tests only, keeps notification open, proves meaningful red against current behavior, and leaves src/quota.mjs unchanged.",
+      "files": ["fixtures/quota-story"]
+    },
+    {
+      "name": "written-unverified-infrastructure",
+      "prompt": "In FIXTURE_ROOT, convert STORY.md into the repository-owned integration test. Exhaust the documented local test route, but do not invent credentials or bypass the required harness. Stop before implementation and return the correct limited terminal if infrastructure is unavailable.",
+      "expected_output": "Writes the agreed test, observes the external harness blocker, reports written-unverified rather than red, withholds the implement handoff, and leaves production unchanged.",
+      "files": ["fixtures/reservation-infra"]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "evaluated_at": "2026-07-20",
+  "method": "A fresh agent ran the current skill read-only on a copied non-Git snapshot.",
+  "status": "pass",
+  "evidence": [
+    "used manifest version, export timestamp, file timestamps, and hashes as non-Git provenance",
+    "grounded current behavior and consumers with file evidence",
+    "compared four materially different directions and selected one",
+    "returned Done, blast radius, risks, detection, rejected directions, and parked expansions",
+    "proved the snapshot inventory and hashes were unchanged"
+  ]
+}

@@ -24,18 +24,23 @@ The installer lets you select supported agents, including Codex. Set `DISABLE_TE
 
 | Skill | What it provides | Scope |
 | --- | --- | --- |
-| [bootstrap](./skills/bootstrap/SKILL.md) | Establishes a codebase's architecture, conventions, docs, reuse boundaries, quality gates, and navigation map. | General-purpose, but expects the target repository's stack and docs to be inspected. |
-| [brainstorming](./skills/brainstorming/SKILL.md) | Decomposes an ambiguous, high-stakes decision into a labelled problem tree and synthesizes a recommendation. | General-purpose; not a bug diagnosis or feature-planning workflow. |
-| [debugging](./skills/debugging/SKILL.md) | Produces concise, evidence-bounded root-cause analysis with facts, inferences, alternatives, and uncertainty separated. | Currently adapted to the Vietnam monorepo and its `docs/DEBUG.md`. |
-| [grill-me](./skills/grill-me/SKILL.md) | Turns a vague feature request into grounded alternatives, risks, and an implementation write-up before code is changed. | Project-adapted; uses the target repository's planning and domain-doc conventions. |
-| [implement](./skills/implement/SKILL.md) | Converts an agreed story, plan, or red test into the smallest proven production change. | Currently adapted to the Vietnam monorepo. |
-| [sync-docs](./skills/sync-docs/SKILL.md) | Reconciles durable business documentation with implemented behaviour after a completed change. | Project-adapted; expects `docs/design/domain.md`. |
-| [stories](./skills/stories/SKILL.md) | Slices a plan into an epic and behaviour-focused user stories with acceptance criteria. | Project-adapted; expects the `docs/plans/` and domain-doc layout. |
-| [tdd](./skills/tdd/SKILL.md) | Converts a user story into meaningful failing tests and stops before production implementation. | Project-adapted; follows `stories`. |
-| [workflow](./skills/workflow/SKILL.md) | Creates or runs a persistent, provider-neutral work graph with explicit authority, evidence, recovery, and integration. | General workflow infrastructure; needs an explicit `workflow_id`. |
-| [worktree](./skills/worktree/SKILL.md) | Coordinates parallel Git worktrees while isolating ports, databases, containers, caches, logs, and ownership. | Broadly reusable; adapt the repository-specific doc references before use elsewhere. |
+| [bootstrap](./skills/bootstrap/SKILL.md) | Maps and rehabilitates a repository from live evidence. | Discovers stack, documentation, commands, and agent conventions from the target repository. |
+| [brainstorming](./skills/brainstorming/SKILL.md) | Decomposes an ambiguous decision into a labelled problem tree and one synthesis. | General reasoning; routes feature briefs and concrete failures to their dedicated skills. |
+| [debugging](./skills/debugging/SKILL.md) | Produces evidence-bounded root-cause analysis without silently implementing a fix. | Uses the target repository's own debugging and verification contract. |
+| [graphflow](./skills/graphflow/SKILL.md) | Creates and runs persistent verified work graphs. | User-invoked Codex orchestration with repository-proved execution and delivery policy. |
+| [grill-me](./skills/grill-me/SKILL.md) | Turns a vague feature request into grounded alternatives, risks, and an implementation brief. | Discovers planning, provenance, and product constraints from the target source. |
+| [implement](./skills/implement/SKILL.md) | Converts an agreed story, plan, or red test into the smallest proven production change. | Discovers owners, commands, and gates from the target repository. |
+| [ship](./skills/ship/SKILL.md) | Gates, records, commits, and publishes finished work. | Discovers task lifecycle, Git policy, remote, base branch, and hosting mechanism. |
+| [stories](./skills/stories/SKILL.md) | Slices an agreed plan into behavior-focused stories and acceptance contracts. | Uses the repository's existing planning owner and terminology. |
+| [sync-docs](./skills/sync-docs/SKILL.md) | Audits or updates durable documentation against implemented behavior. | Discovers durable owners and keeps audit-only invocations read-only. |
+| [tdd](./skills/tdd/SKILL.md) | Turns one accepted behavior contract into meaningful failing tests. | Uses repository-owned test layers and leaves missing product semantics open. |
+| [worktree](./skills/worktree/SKILL.md) | Coordinates parallel Git worktrees with explicit resource isolation and ownership. | Discovers branch, path, dependency, environment, and cleanup policy. |
+| [writing-great-skills](./skills/writing-great-skills/SKILL.md) | Audits skills for predictable invocation and execution. | User-invoked authoring and evaluation rubric. |
 
-The scope column is intentional: a skill labelled **project-adapted** should be made generic or configured for another repository before treating it as portable. Do not silently apply Vietnam-specific paths or commands in a different project.
+Public skills discover repository-owned paths, commands, and policy from the target checkout. A
+runtime-specific surface is named explicitly in its skill contract, such as Graphflow's Codex storage
+and executor adapter. Project-specific behavior belongs in that repository's instructions or
+evaluation fixture, not in the reusable skill contract.
 
 ## Develop and evaluate on a real project
 
@@ -69,10 +74,10 @@ For a fair real-project evaluation, pin a project commit and compare the same sa
 ```text
 skills/<skill-slug>/
   SKILL.md            # instructions and trigger boundary
-  agents/openai.yaml  # optional invocation metadata
+  agents/openai.yaml  # invocation metadata
   references/         # optional supporting material
   scripts/            # optional local helpers
-  evals/              # optional reproducible, publishable benchmarks
+  evals/              # reproducible forward tests and publishable evidence
 ```
 
 Skills should use lowercase, hyphenated slugs and remain self-contained. Do not put secrets, customer data, or machine-specific paths in instructions, references, or published evaluation artifacts.

@@ -25,6 +25,7 @@ import evidence_runner  # noqa: E402
 import memory_state  # noqa: E402
 import progress_state  # noqa: E402
 import question_gate  # noqa: E402
+from skills.graphflow.evals.fixture_support import approve_manifest, complete_clear_review
 
 
 def git(repo: Path, *args: str) -> str:
@@ -58,7 +59,9 @@ class RunnerLifecycleTests(unittest.TestCase):
         (self.repo / "seed.txt").write_text("base\n", encoding="utf-8")
         git(self.repo, "add", ".")
         git(self.repo, "commit", "-qm", "chore: base")
-        git(self.repo, "remote", "add", "origin", str(self.remote))
+        hosting_url = "https://example.invalid/acme/portable-repo.git"
+        git(self.repo, "config", f"url.{self.remote}.insteadOf", hosting_url)
+        git(self.repo, "remote", "add", "origin", hosting_url)
         git(self.repo, "push", "-q", "origin", "master")
         shutil.copytree(TEMPLATE, self.workflow)
         self.configure_workflow()
@@ -85,6 +88,7 @@ class RunnerLifecycleTests(unittest.TestCase):
                     agent=None, started_at=None, updated_at=None, completed_at=None,
                     summary=None, tokens_used=0,
                 )
+        approve_manifest(self.workflow, graph)
         write_json(graph_path, graph)
 
         plan_path = self.workflow / "integrity" / "verification-plan.json"
@@ -115,7 +119,9 @@ class RunnerLifecycleTests(unittest.TestCase):
         write_json(graph_path, graph)
         review_path = self.workflow / "question-review.json"
         review = json.loads(review_path.read_text(encoding="utf-8"))
+        complete_clear_review(review)
         review["graph_digest"] = question_gate.question_surface_digest(graph)
+        review["reviewed_at"] = "2026-07-20T00:00:00Z"
         write_json(review_path, review)
         question_gate.lock(self.workflow)
         write_json(self.workflow / "integrity" / "lock.json", {
@@ -131,6 +137,8 @@ class RunnerLifecycleTests(unittest.TestCase):
         runtime_path = self.workflow / "runtime.json"
         runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
         runtime["authority"]["local_write"] = True
+        runtime["authority"]["network"] = True
+        runtime["authority"]["credentials"] = True
         runtime["delivery"] = {
             "schema_version": 1,
             "required": True,
@@ -145,6 +153,7 @@ class RunnerLifecycleTests(unittest.TestCase):
             },
             "commit": {"subject": "feat: ship graphflow lifecycle", "body": "Publish the verified lifecycle fixture."},
             "pull_request": {
+                "repository": "example.invalid/acme/portable-repo",
                 "title": "feat: ship graphflow lifecycle",
                 "body": "## Goal\nShip the runner lifecycle fixture.\n\n## What changed\n- Added the verified generated fixture.\n\n## Verification\n- Graphflow verifier passed.\n",
             },

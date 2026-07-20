@@ -26,6 +26,8 @@ import workspace_manager as WORKSPACES
 import evidence_runner as EVIDENCE
 import decomposition_broker as DECOMPOSITION
 import run_workflow as WORKFLOW_RUNTIME
+import question_gate as QUESTION_GATE
+from skills.graphflow.evals.fixture_support import approve_manifest, complete_clear_review
 
 
 def command(repo: Path, *args: str, check: bool = True) -> str:
@@ -57,7 +59,9 @@ class DeliveryBrokerTests(unittest.TestCase):
         integration_file.write_text("base\n", encoding="utf-8")
         command(self.repo, "add", ".")
         command(self.repo, "commit", "-qm", "chore: base")
-        command(self.repo, "remote", "add", "origin", str(self.remote))
+        hosting_url = "https://example.invalid/acme/portable-repo.git"
+        command(self.repo, "config", f"url.{self.remote}.insteadOf", hosting_url)
+        command(self.repo, "remote", "add", "origin", hosting_url)
         command(self.repo, "push", "-q", "origin", "master")
         shutil.copytree(TEMPLATE, self.workflow)
 
@@ -82,7 +86,15 @@ class DeliveryBrokerTests(unittest.TestCase):
         for node in graph["nodes"]:
             if node["kind"] != "expand":
                 node["status"] = "complete"
+        approve_manifest(self.workflow, graph)
         write_json(graph_path, graph)
+        review_path = self.workflow / "question-review.json"
+        review = json.loads(review_path.read_text(encoding="utf-8"))
+        complete_clear_review(review)
+        review["graph_digest"] = QUESTION_GATE.question_surface_digest(graph)
+        review["reviewed_at"] = "2026-07-20T00:00:00Z"
+        write_json(review_path, review)
+        QUESTION_GATE.lock(self.workflow)
         requirement_ids = [requirement["id"] for requirement in graph["objective"]["requirements"]]
         plan = {
             "schema_version": 1,
@@ -151,6 +163,8 @@ class DeliveryBrokerTests(unittest.TestCase):
 
         runtime_path = self.workflow / "runtime.json"
         runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        runtime["authority"]["network"] = True
+        runtime["authority"]["credentials"] = True
         runtime["delivery"] = {
             "schema_version": 1,
             "required": True,
@@ -162,6 +176,7 @@ class DeliveryBrokerTests(unittest.TestCase):
             "record": {"mode": "no_plan", "active_plan": None, "completed_plan": None, "no_plan_reason": "This bounded change has no plan file."},
             "commit": {"subject": "feat(server): publish verified tree", "body": "Land the verified Graphflow delivery-eval tree."},
             "pull_request": {
+                "repository": "example.invalid/acme/portable-repo",
                 "title": "feat(server): publish verified tree",
                 "body": "## Goal\nPublish the verified tree.\n\n## What changed\n- Added the verified integration result.\n\n## Verification\n- Graphflow independent verifier passed.\n",
             },
@@ -182,12 +197,14 @@ class DeliveryBrokerTests(unittest.TestCase):
             "from pathlib import Path\n"
             "args=sys.argv[1:]\n"
             f"state=Path({str(gh_state)!r})\n"
-            "if args[:2] == ['auth','status']: raise SystemExit(0)\n"
+            "if args[:2] == ['auth','status'] and '--hostname' in args: raise SystemExit(0)\n"
+            "if args[:1] == ['pr'] and ('--repo' not in args or args[args.index('--repo')+1] != 'example.invalid/acme/portable-repo'): raise SystemExit(3)\n"
             "if args[:2] == ['pr','list']: print(state.read_text() if state.exists() else '[]'); raise SystemExit(0)\n"
             "if args[:2] == ['pr','create']:\n"
             " head=args[args.index('--head')+1]; base=args[args.index('--base')+1]\n"
             " title=args[args.index('--title')+1]; body=args[args.index('--body')+1]\n"
-            " out=subprocess.check_output(['git','ls-remote','--heads','origin',f'refs/heads/{head}'],text=True).split()[0]\n"
+            " remote=subprocess.check_output(['git','remote'],text=True).splitlines()[0]\n"
+            " out=subprocess.check_output(['git','ls-remote','--heads',remote,f'refs/heads/{head}'],text=True).split()[0]\n"
             " state.write_text(json.dumps([{'url':'https://example.invalid/pull/1','state':'OPEN','headRefOid':out,'title':title,'body':body,'baseRefName':base,'headRefName':head}]))\n"
             " print('https://example.invalid/pull/1'); raise SystemExit(0)\n"
             "if args[:2] == ['pr','edit']:\n"
@@ -215,8 +232,8 @@ class DeliveryBrokerTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
 
-    def remote_ref(self, branch: str) -> str | None:
-        value = command(self.repo, "ls-remote", "--heads", "origin", f"refs/heads/{branch}")
+    def remote_ref(self, branch: str, remote: str = "origin") -> str | None:
+        value = command(self.repo, "ls-remote", "--heads", remote, f"refs/heads/{branch}")
         return value.split()[0] if value else None
 
     def test_publish_is_manifest_bound_tree_exact_and_idempotent(self) -> None:
@@ -236,6 +253,69 @@ class DeliveryBrokerTests(unittest.TestCase):
         self.assertEqual(self.delivery()["status"], "published")
         self.assertIsNone(self.delivery()["grant"])
         self.assertEqual(DELIVERY.advance(self.workflow, self.repo, "/missing/gh"), published)
+
+    def test_github_auth_preflight_blocks_before_remote_push(self) -> None:
+        prepared = DELIVERY.prepare(self.workflow, self.repo)
+        self.assertEqual(prepared["status"], "waiting_approval")
+        self.confirm()
+        failing_gh = self.root / "failing-gh"
+        trace = self.root / "failing-gh-args.json"
+        failing_gh.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json,sys\n"
+            "from pathlib import Path\n"
+            f"Path({str(trace)!r}).write_text(json.dumps(sys.argv[1:]))\n"
+            "raise SystemExit(1)\n",
+            encoding="utf-8",
+        )
+        failing_gh.chmod(0o700)
+
+        outcome = DELIVERY.advance(self.workflow, self.repo, str(failing_gh))
+
+        self.assertEqual(outcome["status"], "waiting_external")
+        self.assertIn("preflight failed", outcome["failure"])
+        self.assertEqual(json.loads(trace.read_text(encoding="utf-8"))[:3], ["auth", "status", "--hostname"])
+        self.assertIsNone(self.remote_ref("codex/delivery-eval"))
+
+    def test_preflight_does_not_touch_gh_without_network_and_credential_authority(self) -> None:
+        runtime_path = self.workflow / "runtime.json"
+        runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        runtime["authority"]["network"] = False
+        runtime["authority"]["credentials"] = False
+        write_json(runtime_path, runtime)
+        marker = self.root / "gh-invoked"
+        forbidden_gh = self.root / "forbidden-gh"
+        forbidden_gh.write_text(
+            "#!/usr/bin/env python3\n"
+            "from pathlib import Path\n"
+            f"Path({str(marker)!r}).write_text('invoked')\n",
+            encoding="utf-8",
+        )
+        forbidden_gh.chmod(0o700)
+
+        outcome = DELIVERY.preflight(self.workflow, self.repo, str(forbidden_gh))
+
+        self.assertEqual(outcome["status"], "waiting_external")
+        self.assertIn("explicit authority", outcome["failure"])
+        self.assertFalse(marker.exists())
+
+    def test_preflight_rejects_remote_repository_mismatch_before_gh(self) -> None:
+        command(self.repo, "remote", "set-url", "origin", "https://example.invalid/acme/other.git")
+        marker = self.root / "mismatch-gh-invoked"
+        forbidden_gh = self.root / "mismatch-forbidden-gh"
+        forbidden_gh.write_text(
+            "#!/usr/bin/env python3\n"
+            "from pathlib import Path\n"
+            f"Path({str(marker)!r}).write_text('invoked')\n",
+            encoding="utf-8",
+        )
+        forbidden_gh.chmod(0o700)
+
+        outcome = DELIVERY.preflight(self.workflow, self.repo, str(forbidden_gh))
+
+        self.assertEqual(outcome["status"], "waiting_external")
+        self.assertIn("different repositories", outcome["failure"])
+        self.assertFalse(marker.exists())
 
     def test_recursive_split_parallel_worktrees_verification_and_ship_lifecycle(self) -> None:
         reviewer = self.root / "fake-decomposition-reviewer"
@@ -450,13 +530,20 @@ class DeliveryBrokerTests(unittest.TestCase):
         self.assertEqual(old_request["status"], "superseded")
         self.assertIsNone(self.remote_ref("codex/delivery-eval"))
 
-    def test_ship_adapter_rejects_a_noncanonical_remote_or_base(self) -> None:
+    def test_ship_adapter_accepts_a_repository_configured_remote_and_base(self) -> None:
+        command(self.repo, "remote", "rename", "origin", "upstream")
+        command(self.repo, "push", "-q", "upstream", "master:main")
         runtime_path = self.workflow / "runtime.json"
         runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
         runtime["delivery"]["base_branch"] = "main"
+        runtime["delivery"]["remote"] = "upstream"
         write_json(runtime_path, runtime)
-        with self.assertRaisesRegex(ValueError, "origin with master"):
-            DELIVERY.prepare(self.workflow, self.repo)
+        prepared = DELIVERY.prepare(self.workflow, self.repo)
+        self.assertEqual(prepared["status"], "waiting_approval")
+        self.confirm()
+        published = DELIVERY.advance(self.workflow, self.repo, str(self.fake_gh))
+        self.assertEqual(published["status"], "published")
+        self.assertEqual(self.remote_ref("codex/delivery-eval", "upstream"), published["release_sha"])
 
     def test_fabricated_attestation_blocks_ship_prepare(self) -> None:
         evidence = self.workflow / "evidence/attestations/CHK-SHIP-NEGATIVE.json"

@@ -1,0 +1,8 @@
+{
+  "name": "portable-web",
+  "private": true,
+  "scripts": {
+    "check": "node --check index.mjs",
+    "test": "node --test"
+  }
+}

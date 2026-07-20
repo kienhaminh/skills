@@ -17,7 +17,8 @@ Disposable artifacts live under `.codex/workflows/<id>/prototype/`; promotable c
 
 Write `prototype/manifest.json` with: schema/workflow ID, canonical method, artifact, promotable flag, fidelity, mocked boundaries, `not_proven`, status, approval, and digest. Example: [template manifest](../assets/workflow-template/prototype/manifest.json).
 
-Mirror the lock in root `intent_baseline`:
+Mirror the lock in root `intent_baseline`. Its digest is the SHA-256 of the approved manifest; the
+manifest's `baseline_digest` separately binds the reviewed artifact bytes:
 
 - **Required:** `required: true`; a normalized manifest path; one prototyping node; `approved` plus `sha256:<64 hex>` and `approval: user|deterministic` before executable phase.
 - **Exempt:** only deterministic mechanical work with no unresolved intent choice; use `required: false`, `not_required`, null manifest/digest/approval, and a concrete reason.

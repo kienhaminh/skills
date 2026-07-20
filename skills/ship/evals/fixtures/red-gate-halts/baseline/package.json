@@ -1,0 +1,9 @@
+{
+  "name": "ship-eval-red",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "type-check": "node --check src/token.mjs",
+    "test": "node --test"
+  }
+}

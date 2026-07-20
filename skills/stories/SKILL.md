@@ -1,109 +1,84 @@
 ---
 name: stories
-description: Convert a plan into an epic and behaviour-sliced user stories with acceptance criteria under docs/plans/stories/. Use when the user asks for user stories, backlog items, tickets, an epic, or a breakdown of work implied by a plan. Ground stories in docs/design/domain.md and flag conflicts with established business rules.
+description: Slice an agreed plan into an epic and behavior-focused stories with observable acceptance criteria, reconciled against repository-owned domain rules.
 ---
 
-# Plan to user stories
+# Turn a plan into user stories
 
-Turn implementation intent into observable user value. Produce one transient story file; do not
-rewrite the source plan or implementation code.
+Produce one transient story artifact that translates implementation intent into observable user
+value. Preserve the source plan and implementation.
 
-## Read the inputs
+## 1. Read the contract
 
-Use the named plan or select one from `docs/plans/active/`. If several candidates exist and the
-request does not identify one, ask which plan to use. Map non-standard plans onto:
+Use the named plan or the repository's active planning source. Map its goal, current state, decisions,
+steps, verification, exclusions, and open questions. Read the authoritative domain/product rules when
+present; use the plan alone and state the limitation when durable rules are absent.
 
-- **Goal** -> epic and value.
-- **Out of scope** -> explicit exclusions.
-- **Current state** -> user pain and `so that` clauses.
-- **Decisions** -> story constraints.
-- **Steps** -> coverage and dependencies.
-- **Verification** -> evidence to translate into observable acceptance criteria.
-- **Open questions** -> `Open` notes on affected stories.
+Complete this phase when every plan section has a destination in the story artifact or an explicit
+reason it does not apply.
 
-Read `docs/design/domain.md` for durable actors, concepts, and business rules. If it is missing or
-too thin, proceed from the plan and state the limitation. Do not read code to settle feasibility and
-do not treat older story files as authoritative.
+## 2. Check the domain
 
-## Check the domain
+Use actors and value named by the plan or durable domain source. When proposed behavior contradicts a
+binding rule:
 
-Use real actors and value named by the plan or domain. When a proposed behaviour contradicts a
-documented business rule:
+1. mark the affected story `Open` or `Contradicts domain`;
+2. include the conflict in a `Domain check` section;
+3. preserve both source documents for maintainer resolution.
 
-1. mark the affected story with `Open:` or `Contradicts domain:`;
-2. include the conflict in `## Domain check`;
-3. leave the rule and plan unchanged for the maintainer to resolve.
+Complete the check when every relevant rule is satisfied, contradicted, or named as unavailable.
 
-Note lasting new behaviour that should later be folded into `domain.md` with `$sync-docs`.
+## 3. Slice vertically
 
-## Slice by behaviour
-
-Produce one epic and usually 3-7 vertical stories. A story must name who notices the change and what
-they can do afterwards.
+Produce one epic and usually three to seven stories. Each story names who observes the change, what
+they can do afterward, and why it matters.
 
 - Merge implementation steps that deliver one observable capability.
-- Split a step only when it contains independently valuable behaviours.
-- Keep groundwork inside the acceptance criteria of the capability it enables.
-- Use a developer as actor only when developer experience is the deliverable.
-- Carry dependencies, settled constraints, and unresolved questions explicitly.
-- Never turn an out-of-scope item into a story.
+- Split independently valuable behavior.
+- Keep enabling groundwork inside the capability it enables.
+- Use a developer actor only for a developer-experience outcome.
+- Carry dependencies, constraints, and unresolved questions explicitly.
+- Keep excluded scope out of the backlog.
 
-## Write acceptance criteria
+Complete slicing when every plan step maps to exactly one story or to named enabling groundwork.
 
-Write 3-6 criteria per story at the actor's altitude, including a meaningful unhappy path.
+## 4. Write acceptance criteria
 
-- Describe observable behaviour, not files, tables, guards, framework calls, or internal steps.
-- Translate engineering verification into what the actor experiences; do not copy it verbatim.
-- Keep technical terms only when the actor directly uses that API, tool, or command.
-- Do not include generic gates such as "tests pass" or invent repository details absent from the
-  plan.
-- Put settled implementation choices in `Constraints`, not in the story's value statement.
+Give each story three to six criteria at the actor's altitude. Include meaningful failure behavior
+when the plan or durable rules define it. When failure semantics are missing, add an `Open` question
+instead of inventing status codes, messages, permissions, retries, or fallback behavior. Describe
+observable outcomes; keep files, tables, framework calls, and generic quality gates in constraints or
+implementation notes. Preserve technical vocabulary only when the actor directly uses the API, tool,
+or command.
 
-## Write the story file
-
-Write English to `docs/plans/stories/<plan-slug>.md`:
+Use this minimum shape:
 
 ```markdown
-# Epic: <capability from Goal>
-Source: [`plans/active/<slug>.md`](../active/<slug>.md). Generated: YYYY-MM-DD.
-> Transient: discard with the plan. Durable behaviour belongs in `design/domain.md`.
+# Epic: <observable capability>
+Source: <plan path or request>. Generated: YYYY-MM-DD.
 
 ## Value
-<Goal + Current state, grounded in the domain>
-
 ## Not included
-- <each out-of-scope item>
-
 ## Domain check
-- <conflicts, limitations, or "No contradictions found.">
-
 ## Stories
-### S1 - <observable capability>
+### S1 — <observable capability>
 **As a** <actor>, **I want** <capability>, **so that** <value>.
 Acceptance criteria:
-- [ ] <observable behaviour>
+- [ ] <observable behavior>
 Constraints: <settled decision; omit if none>
 Depends on: <S-id or none>
 Open: <unresolved question; omit if none>
 Contradicts domain: <rule; omit if none>
 
 ## Traceability
-| Story | Plan steps | Plan verification |
+| Story | Plan source | Plan verification |
 | --- | --- | --- |
 ```
 
-The traceability table must account for every plan step. Identify groundwork with no standalone
-user value rather than inventing a horizontal story for it.
+Write to the repository's existing story/backlog location and language. If none exists, return the
+artifact in chat unless the user requested a file.
 
-## Verify and hand off
-
-Read the generated file back and confirm:
-
-- every story has a real actor, value, criteria, and traceable plan source;
-- criteria stay at the actor's altitude and include relevant failure behaviour;
-- exclusions, constraints, dependencies, open questions, and domain conflicts remain visible;
-- the plan is untouched and no unsupported repository detail was invented.
-
-Report the output path and only the judgement calls the user should review: merged or split steps,
-inferred unhappy paths, unresolved questions, and domain conflicts. Invoke `$tdd` only when the
-user asks to turn a selected story into failing tests.
+The skill is complete when every story has a real actor, value, observable criteria, and traceable
+source; defined failure behavior is preserved and missing failure contracts remain visible as `Open`;
+exclusions, dependencies, questions, and domain conflicts are accounted for. Invoke `$tdd` only when
+the user requests tests for a selected story.

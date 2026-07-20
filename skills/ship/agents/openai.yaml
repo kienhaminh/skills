@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ship"
+  short_description: "Gate, record, commit, and publish finished work"
+  default_prompt: "Use $ship to gate this finished work, follow any applicable task-record lifecycle, commit only the intended tree, and publish through the repository's actual remote and base branch."

@@ -1,0 +1,10 @@
+{
+  "skill_name": "brainstorming",
+  "evals": [
+    {
+      "name": "bounded-strategy-tree",
+      "prompt": "We maintain a developer CLI used by a small team. Should we build a public plugin marketplace this quarter? Budget is six engineer-weeks; security review capacity is limited. Brainstorm the decision and give one recommendation. Do not create files.",
+      "expected_output": "Builds a labelled tree, marks assumptions, prunes low-leverage branches, answers every leaf, synthesizes one recommendation, and performs no writes."
+    }
+  ]
+}

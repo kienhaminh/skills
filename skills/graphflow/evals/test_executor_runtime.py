@@ -15,6 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import run_workflow as WORKFLOW_RUNTIME
 from executor_common import canonical_graph_digest, question_surface_digest
+from skills.graphflow.evals.fixture_support import approve_manifest, complete_clear_review
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,6 +50,7 @@ class ExecutorRuntimeTests(unittest.TestCase):
         write_json(graph_path, graph)
         review_path = self.workflow / "question-review.json"
         review = json.loads(review_path.read_text(encoding="utf-8"))
+        complete_clear_review(review)
         review["workflow_id"] = graph["workflow_id"]
         review["graph_digest"] = question_surface_digest(graph)
         review["reviewer"]["agent_id"] = "independent-runtime-test-reviewer"
@@ -90,6 +92,11 @@ class ExecutorRuntimeTests(unittest.TestCase):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["workflow_id"] = graph["workflow_id"]
         write_json(manifest_path, manifest)
+        approve_manifest(self.workflow, graph)
+        node_p = next(node for node in graph["nodes"] if node["id"] == "P")
+        node_p["status"] = "complete"
+        node_p["retry"]["attempts"] = 1
+        next(node for node in graph["nodes"] if node["id"] == "B")["status"] = "complete"
 
         relative_manifest = ".codex/workflows/executor-runtime-eval/prototype/manifest.json"
         plan["checks"][0]["argv"] = ["python3", "-m", "json.tool", relative_manifest]
@@ -101,7 +108,7 @@ class ExecutorRuntimeTests(unittest.TestCase):
         spec = json.loads(spec_path.read_text(encoding="utf-8"))
         spec["argv"] = ["python3", "-m", "json.tool", relative_manifest]
         write_json(spec_path, spec)
-        next(node for node in graph["nodes"] if node["id"] == "P")["executor"]["digest"] = digest(spec_path)
+        node_p["executor"]["digest"] = digest(spec_path)
         write_json(graph_path, graph)
         self.lock_question_review()
         locked = subprocess.run(

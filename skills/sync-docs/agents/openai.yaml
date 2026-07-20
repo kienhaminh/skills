@@ -1,4 +1,4 @@
 interface:
   display_name: "Sync Docs"
-  short_description: "Reconcile durable business docs with what the code actually does"
-  default_prompt: "Use $sync-docs to reconcile the durable business docs with the current code and fold in finished plans."
+  short_description: "Reconcile durable docs with implemented behavior"
+  default_prompt: "Use $sync-docs to reconcile the repository's durable product or domain documentation with current implementation evidence."

@@ -17,6 +17,7 @@ SPEC = importlib.util.spec_from_file_location("workflow_evidence", ROOT / "scrip
 assert SPEC and SPEC.loader
 EVIDENCE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(EVIDENCE)
+from skills.graphflow.evals.fixture_support import approve_intent_and_review
 
 
 class EvidenceRunnerTests(unittest.TestCase):
@@ -47,6 +48,7 @@ class EvidenceRunnerTests(unittest.TestCase):
             fixture = fixture_by_check[check["id"]]
             check["argv"] = ["python3", "-c", f"from pathlib import Path; raise SystemExit(0 if Path('{fixture}').exists() else 1)"]
         self.write_json(plan_path, plan)
+        approve_intent_and_review(self.workflow)
 
     def tearDown(self) -> None:
         self.temporary.cleanup()

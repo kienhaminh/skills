@@ -1,28 +1,38 @@
 ---
 name: debugging
-description: Diagnose local failures in the Vietnam monorepo through evidence-based root-cause analysis. Use for bugs, failing tests, runtime errors, data anomalies, stuck jobs, environment problems, and complex, intermittent, or expensive-to-reproduce failures.
+description: Diagnose software failures through evidence-based root-cause analysis. Use for bugs, failing tests, runtime errors, data anomalies, stuck jobs, environment failures, and intermittent or expensive-to-reproduce incidents.
 ---
 
-# Debugging
+# Diagnose the first divergence
 
-Follow `docs/DEBUG.md` for project-specific procedures, evidence sources, commands, and known traps. Do not invent a separate reproduction method.
+Read the repository's debugging instructions and known-failure records when present; repository-
+specific procedures own commands and evidence sources.
 
-Reason internally: verify the symptom, trace the first divergence from expected behavior, identify the violated invariant, compare competing hypotheses, seek discriminating evidence, and derive the causal chain.
+Verify the symptom, find the first divergence from expected behavior, identify the violated
+invariant, compare competing hypotheses, seek discriminating evidence, and derive the causal chain.
+When reproduction is costly, trace backward through callers, contracts, state transitions, async
+boundaries, concurrency, retries, caches, configuration, and partial failures.
 
-If reproduction is costly or unreliable, trace backward through callers, contracts, state transitions, and async boundaries. Inspect concurrency, retries, timing, caches, configuration, and partial failures. Mark conclusions as analysis-derived and lower confidence when runtime evidence is missing.
+Keep facts, inferences, and unknowns distinct. Separate root cause from trigger, contributing factor,
+and downstream symptom. Try to falsify the leading hypothesis and explain the strongest rejected
+alternative. Runtime evidence supports direct conclusions; static-only reasoning receives lower
+confidence and an explicit confirmation path.
 
-Rules:
+When available evidence cannot distinguish the surviving hypotheses, return `inconclusive` with the
+ranked candidates, shared evidence, and smallest discriminating observation still needed. An
+inconclusive result names no root cause.
 
-- Trust current code and runtime evidence. Separate facts, inferences, and unknowns.
-- Distinguish root cause from trigger, contributing factor, and downstream symptom.
-- Try to falsify the leading hypothesis; explain the strongest rejected alternative.
-- Diagnose only. Do not propose or implement a fix unless separately requested.
+This skill's deliverable is diagnosis. Implement or recommend a fix only when the user separately
+authorizes that scope.
 
-Report in at most 180 words unless the user requests detail:
+Report in at most 180 words unless detail is requested:
 
 - diagnosis and confidence;
 - evidence-backed causal chain and violated invariant;
 - strongest rejected alternative;
-- remaining uncertainty and evidence needed for confirmation.
+- remaining uncertainty and the exact evidence needed to close it.
 
-Do not narrate the process, restate the prompt, or list every inspected file.
+Diagnosis is complete when one causal chain explains the observed symptom, survives the strongest
+available falsification attempt, and every material uncertainty is named. The inconclusive branch is
+complete when every surviving hypothesis and the exact evidence needed to distinguish them are named
+without promoting one to a diagnosis.

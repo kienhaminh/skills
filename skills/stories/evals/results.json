@@ -1,0 +1,12 @@
+{
+  "evaluated_at": "2026-07-20",
+  "method": "A fresh agent used the current skill to write the requested artifact in the published fixture.",
+  "status": "pass",
+  "evidence": [
+    "created one traceable epic and two independently valuable boundary stories",
+    "preserved the inclusive quota rule from PRODUCT.md",
+    "kept notification behavior open without inventing channel, wording, status, retry, or fallback",
+    "git diff --check passed",
+    "changed only planning/stories.md"
+  ]
+}

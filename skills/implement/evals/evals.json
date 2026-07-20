@@ -1,0 +1,11 @@
+{
+  "skill_name": "implement",
+  "evals": [
+    {
+      "name": "smallest-green-change",
+      "prompt": "In FIXTURE_ROOT, implement the accepted quota behavior described in STORY.md. The red test already exists. Make the smallest production change, run repository gates, and do not commit.",
+      "expected_output": "Reproduces red, changes only src/quota.mjs, passes npm test, preserves the test contract, and hands off exact evidence.",
+      "files": ["fixtures/quota-red"]
+    }
+  ]
+}

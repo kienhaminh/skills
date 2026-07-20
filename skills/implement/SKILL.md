@@ -1,63 +1,55 @@
 ---
 name: implement
-description: Implement an agreed story, plan, or failing-test target in the Vietnam monorepo and prove the resulting behaviour. Use for requests to implement, write code, build a feature, or make red tests pass. Not for diagnosis-only work (use $debugging), tests-first design (use $tdd), or story slicing (use $stories).
+description: Implement an agreed story, plan, or failing-test target and prove the resulting behavior. Use when an accepted contract authorizes production changes; route diagnosis-only work to $debugging and test design to $tdd.
 ---
 
-# Implement
+# Implement an agreed target
 
-Make the agreed behaviour real with the smallest change that fits the current codebase. Prefer reuse
-over new abstractions and evidence over claims.
+Make the accepted behavior real with the smallest coherent change that fits the current repository.
 
-## Pin the target
+## 1. Pin the target
 
-Read the red tests, selected story, or plan and state the behaviour it constrains. When no executable
-target exists, write or borrow a focused check, or state explicit acceptance criteria before coding.
-Do not implement against an unnamed target.
+Read the selected story, plan, failing tests, or explicit acceptance criteria. Read repository
+instructions, the nearest implementation and tests, and the owning configuration. When no executable
+target exists, establish one focused check or explicit acceptance contract before editing.
 
-Read the nearest existing implementation, its tests, and owning configuration. Follow the repository
-trust order in `docs/README.md`; current code and executable config outrank stale prose.
+Complete this phase when expected behavior, failure behavior, exclusions, and proof command are
+named.
 
-## Plan the smallest change
+## 2. Find the smallest owner
 
-For a non-trivial edit, state:
+For a non-trivial edit, identify:
 
-- files and contracts to touch;
+- contracts and files that own the behavior;
 - callers and blast radius found by search;
 - the smallest reuse or extension that satisfies the target;
-- unresolved choices that would materially change the implementation.
+- choices that materially change implementation or authority.
 
-Keep speculative features, generic wrappers, and unrelated cleanup out of scope.
+Follow repository guides relevant to the change—conventions, security, observability, testing, known
+debt, and release policy—when present. Match existing naming, error shapes, UI patterns, dependency
+direction, and comment density.
 
-## Follow repository rules
+Complete this phase when each planned edit has one owner and unrelated cleanup or speculative
+features are outside the change set.
 
-Read only the guides relevant to the change:
+## 3. Make the target green
 
-- `docs/CONVENTIONS.md` for placement, contracts, boundaries, and named exceptions;
-- `docs/SECURITY.md` before changing auth, input, or secrets;
-- `docs/OBSERVATION.md` before adding logs, health checks, or monitoring;
-- `docs/TESTING.md` for real commands, test levels, and infrastructure;
-- `docs/plans/tech-debt.md` for known failures that must not be mistaken for regressions.
+Implement production behavior while preserving the agreed test contract. If a target is incorrect,
+surface the exact conflict and obtain a contract decision before changing it.
 
-Match surrounding naming, error shapes, comment density, UI patterns, and dependency direction. Reuse
-the existing owner of a concept instead of creating a parallel one.
+Run the narrowest affected checks first, then every supported broader gate applicable to the change.
+For previewable behavior, exercise the changed flow end to end. Mark infrastructure-dependent checks
+as unrun when their dependencies are unavailable.
 
-## Make the target green
+Complete implementation when the target passes for the intended reason, affected existing behavior
+still passes, and the final diff contains only accepted scope.
 
-Implement production behaviour; do not delete a case, loosen an assertion, or rewrite the target to
-manufacture green. If an agreed test is wrong, stop and explain the conflict before changing it.
+## 4. Hand off
 
-Run the narrowest affected checks first, then the supported broader gate. For previewable behaviour,
-drive the changed flow end to end. Report infrastructure-dependent checks as unrun when their
-dependencies are unavailable.
+Report changed files, material design choices, exact commands and observed results, unrun checks,
+assumptions, deliberate exclusions, and remaining debt. Route durable behavior changes through the
+installed documentation-sync skill when one exists. Invoke `$ship` only when the user asks to land
+the work.
 
-## Hand off
-
-Report:
-
-- changed files and the reason for each non-obvious choice;
-- exact commands run and observed results;
-- unrun checks, assumptions, and deliberate exclusions;
-- any remaining debt or follow-up outside the target.
-
-Invoke `$sync-docs` when durable business behaviour changed. Invoke `$ship` only when the user asks
-to land the completed work.
+Complete handoff when every changed path, verification result, unrun surface, and remaining limit is
+accounted for and no claim exceeds its evidence.

@@ -1,62 +1,48 @@
 # Coding-agent entrypoints
 
-Use this contract whenever creating or updating root `AGENTS.md` and `CLAUDE.md`.
+Use this contract only when the user requests a coding-agent entrypoint or the selected tooling
+requires one. The repository and tool documentation own filenames, format, scope, and precedence.
 
-## Required layout
+## Discover ownership
 
-Keep both files compact because they enter every session prompt. Order shared sections as:
+Inventory existing root and nested instruction files, generated sections, tool configuration, and
+repository rules that name an authoritative owner. Read every entrypoint affected by the change.
+Preserve formats and scope boundaries that are already coherent; create a new entrypoint only with
+user authority or a proved tool requirement.
 
-1. `# Repository operating guide`
-2. `## Source tree`
-3. the canonical core block below, copied byte-for-byte including markers;
-4. `## Source-of-truth routing`;
-5. `## Canonical commands`;
-6. `## Repository-specific rules`;
-7. optional, minimal tool-specific protocol.
+Complete discovery when each affected file has a named audience, scope, precedence, owner, and
+generation status.
 
-Always render `## Source tree` from the completed checkout, after source, configuration, tooling, tests, CI, and durable docs are finalized. Show entrypoints, bounded contexts or packages, shared contracts, tests, infrastructure, and documentation owners; omit generated, dependency, cache, and build-output trees. Expand `docs/` to list every durable top-level document owner and routing directory. Annotate ownership or purpose briefly. Never reuse a stale or pre-setup tree merely because one already exists.
+## Build the operating map
 
-## Finalization order
+Keep always-loaded instructions compact. Link to durable owners for detail and include only the
+facts an agent needs before its first action:
 
-Apply `Setup → Document → Verify → Stabilize → Index → Render`:
+- repository scope and source-of-truth order;
+- source areas and dependency boundaries;
+- canonical setup, run, check, test, and inspection surfaces;
+- repository-specific safety and authority gates;
+- routing to deeper conventions, security, debugging, operations, and planning guidance.
 
-1. Read existing entrypoints early for binding constraints; defer rewriting them.
-2. Complete source, configuration, tooling, tests, infrastructure, CI, cleanup, and restructuring.
-3. Create and validate the complete documentation system.
-4. Run supported gates and repair all durable files until no planned structural or docs changes remain.
-5. Regenerate the final code index from the stable checkout.
-6. Render the source tree, then merge the final shared guide into both entrypoints.
-7. Run non-mutating entrypoint, link, and drift checks. If any later fix changes a durable path or doc, repeat steps 5–7.
+Derive names, commands, and paths from the final checkout. Separate shared repository rules from
+tool-specific protocol. A nested entrypoint should contain only a real subtree override and state how
+it inherits parent rules.
 
-## Merge protocol
+Complete the map when an unfamiliar agent can select its first read and verification command without
+duplicating the linked owners.
+
+## Merge and synchronize
 
 Apply `Read → Extract → Compare → Merge → Verify`:
 
-1. Read both existing files completely before writing either one.
-2. Extract their source tree, shared rules, repository-specific rules, and tool-specific protocol.
-3. Compare each rule by intent, scope, authority, and current checkout evidence.
-4. Replace equivalent shared rules with the canonical wording below; retain stricter compatible details under repository-specific rules.
-5. Preserve non-conflicting user or repository instructions. Move a rule only when its scope becomes clearer.
-6. Do not silently resolve a real conflict. Preserve the authoritative existing rule, record the conflict, and ask only when it materially changes behavior.
-7. Keep shared sections identical. Put a necessary Claude-only delta in `CLAUDE.md` under `## Claude-specific protocol`; declare the reason and owner.
-8. Refresh source-tree paths, commands, and links from final live evidence; remove superseded text only after proving it stale.
+1. Extract each existing rule with its intent, scope, authority, and owner.
+2. Preserve stricter compatible rules and surface genuine conflicts instead of guessing precedence.
+3. Put each shared fact in one durable owner and link to it from other entrypoints where the format
+   supports links.
+4. Keep equivalent shared sections synchronized only when repository policy requires a synchronized
+   set; isolate necessary tool-specific differences under a named owner.
+5. Refresh paths and commands after structural work is stable, then run repository-provided schema,
+   generation, link, and drift checks.
 
-## Canonical core block
-
-<!-- bootstrap:core:start -->
-## Core working principles
-
-- **Source Before Memory** — Trust the current checkout, runtime evidence, and authoritative repository docs over recalled context.
-- **Evidence First** — Separate `Observed`, `Requested`, and `Proposed`; never present an inference or plan as implemented fact.
-- **Smallest Sufficient Read Set** — Start from the source tree and owning entrypoint, then follow symbols, tests, and configuration only as needed.
-- **Search → Reuse → Extend → Localize → Extract** — Search semantic owners before adding a function, component, class, hook, service, type, or module.
-- **Observe → Hypothesize → Falsify → Decide → Verify** — Make the smallest testable claim, seek disconfirming evidence, then act.
-- **KISS → YAGNI → AHA → Rule of Three** — Prefer the simplest correct design; tolerate small duplication before creating a premature abstraction.
-- **Narrowest Responsible Owner** — Place behavior with the cohesive domain owner and preserve dependency direction; avoid generic dumping grounds.
-- **Contract → Tests → Implementation** — Protect public behavior and failure modes before structural or risky changes.
-- **Characterize → Migrate → Verify → Delete** — Prove ownership and replacement before removing code, data, migrations, assets, tooling, or infrastructure.
-- **Scope Discipline** — Preserve unrelated user work, avoid opportunistic rewrites, and keep changes reversible and reviewable.
-- **Verify, Then Claim** — Run the narrowest relevant checks first, report unrun gates honestly, and never claim readiness without evidence.
-<!-- bootstrap:core:end -->
-
-Copy this block exactly. Add repository detail outside its markers; never fork or paraphrase the canonical core inside either entrypoint.
+Synchronization is complete when every changed statement is checkout-derived, each entrypoint still
+matches its tool's contract, and no shared rule has conflicting active copies.

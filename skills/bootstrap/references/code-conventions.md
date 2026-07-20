@@ -57,7 +57,9 @@ This reports physical lines, not logical statements. Add the stack's native anal
 
 ## Required convention profile
 
-Put the authoritative profile in the repository's existing convention owner, normally `docs/CONVENTIONS.md`. Keep agent entrypoints as routers, not duplicate rulebooks.
+Put the authoritative profile in the repository's discovered convention owner. If none exists and
+the user authorizes a new owner, choose its path from the repository's documentation structure. Keep
+agent entrypoints as routers, not duplicate rulebooks.
 
 ```markdown
 # Code conventions

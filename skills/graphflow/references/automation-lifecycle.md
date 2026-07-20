@@ -1,6 +1,8 @@
 # Automation lifecycle
 
-The workflow graph is provider-neutral. Graphflow owns execution lifecycle and scheduling. Goal/loop/manual callers are optional invocation and observation adapters.
+The graph schema and caller lifecycle are provider-neutral. This bundled Graphflow implementation is
+Codex-scoped: it stores workflows under `.codex/` and its agent executor invokes Codex. Goal, loop,
+and manual callers remain optional invocation and observation adapters.
 
 ## Explicit workflow identity
 

@@ -1,0 +1,11 @@
+{
+  "skill_name": "stories",
+  "evals": [
+    {
+      "name": "contract-owned-story-slicing",
+      "prompt": "In FIXTURE_ROOT, turn planning/plan.md into an epic and the smallest behavior-focused stories. Write the accepted artifact to planning/stories.md, preserve PRODUCT.md semantics, and leave unresolved product choices open.",
+      "expected_output": "Writes one traceable epic and independently valuable stories, preserves the defined inclusive quota boundary, marks notification semantics open, and changes only planning/stories.md.",
+      "files": ["fixtures/upload-plan"]
+    }
+  ]
+}

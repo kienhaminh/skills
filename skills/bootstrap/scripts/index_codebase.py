@@ -23,10 +23,12 @@ IGNORED = {
 LANGUAGES = {
     ".c": "c", ".cc": "cpp", ".cpp": "cpp", ".cs": "csharp",
     ".go": "go", ".h": "c", ".hpp": "cpp", ".java": "java",
-    ".js": "javascript", ".jsx": "javascript", ".kt": "kotlin",
+    ".cjs": "javascript", ".js": "javascript", ".jsx": "javascript",
+    ".mjs": "javascript", ".kt": "kotlin",
     ".kts": "kotlin", ".m": "objective-c", ".mm": "objective-cpp",
     ".php": "php", ".py": "python", ".rb": "ruby", ".rs": "rust",
-    ".scala": "scala", ".swift": "swift", ".ts": "typescript",
+    ".scala": "scala", ".swift": "swift", ".cts": "typescript",
+    ".mts": "typescript", ".ts": "typescript",
     ".tsx": "typescript", ".vue": "vue", ".svelte": "svelte",
 }
 STOPWORDS = {
@@ -158,6 +160,7 @@ def record(root: Path, path: Path) -> dict[str, Any]:
     language = LANGUAGES[path.suffix.lower()]
     symbols, imports = python_facts(text) if language == "python" else regex_facts(text, language)
     keyword_counts = Counter(words(str(path.relative_to(root))))
+    keyword_counts.update(words(text))
     for symbol in symbols:
         keyword_counts.update(words(symbol["name"]))
     return {
@@ -167,7 +170,7 @@ def record(root: Path, path: Path) -> dict[str, Any]:
         "bytes": len(raw),
         "lines": text.count("\n") + (0 if not text or text.endswith("\n") else 1),
         "sha256": hashlib.sha256(raw).hexdigest()[:16],
-        "keywords": [word for word, _ in keyword_counts.most_common(20)],
+        "keywords": [word for word, _ in keyword_counts.most_common(80)],
         "symbols": symbols[:80],
         "imports": sorted(set(imports))[:120],
         "referenced_by": [],

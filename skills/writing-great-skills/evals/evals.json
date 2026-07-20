@@ -1,0 +1,10 @@
+{
+  "skill_name": "writing-great-skills",
+  "evals": [
+    {
+      "name": "portable-library-audit",
+      "prompt": "Audit every public skill under LIBRARY_ROOT for invocation, information hierarchy, execution, language, portability, authority, and forward evidence. Fix every blocking finding, rerun independent audits, and report one grade per skill.",
+      "expected_output": "Findings are evidence-backed; project policy is removed from public behavior; every step has an honest terminal state; realistic critical modes are tested; all selected skills receive an explicit grade."
+    }
+  ]
+}

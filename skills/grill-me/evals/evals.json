@@ -1,0 +1,11 @@
+{
+  "skill_name": "grill-me",
+  "evals": [
+    {
+      "name": "non-git-feature-brief",
+      "prompt": "The source snapshot at FIXTURE_ROOT is not a Git checkout. Grill the request to add CSV export, ground every current-state claim in the snapshot, compare materially different directions, and return the implementation brief in chat. Do not modify files.",
+      "expected_output": "Uses non-Git provenance, checks the premise and consumers, gives distinct directions and one recommendation, reports limitations, and writes no file.",
+      "files": ["fixtures/non-git-export"]
+    }
+  ]
+}

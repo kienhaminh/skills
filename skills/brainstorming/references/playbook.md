@@ -64,7 +64,11 @@ If you cannot state (1), the brainstorm isn't done — either a leaf is unanswer
 
 ## Checkpointing the user
 
-Don't interrogate every node. Ask via AskUserQuestion **only** at a pivotal unknown — one whose resolution swings the root answer and which you genuinely can't settle yourself. Carry 2–4 concrete options, one **(Recommended)**. Everywhere else, state an `assumed:` line and keep moving; the user can point at any node id to correct you. In a non-interactive run, replace every checkpoint with your best assumption, marked `assumed:`.
+Checkpoint only at a pivotal unknown whose resolution swings the root answer and which evidence cannot
+settle. Use the available user-input mechanism with two to four concrete options and one
+**(Recommended)** option. Everywhere else, state an `assumed:` line and keep moving; the user can
+correct any node by ID. In a non-interactive run, replace each checkpoint with the safest plausible
+assumption, marked `assumed:`.
 
 ## Worked example (compressed)
 

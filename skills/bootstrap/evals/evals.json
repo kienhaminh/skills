@@ -1,0 +1,17 @@
+{
+  "skill_name": "bootstrap",
+  "evals": [
+    {
+      "name": "portable-readiness-map",
+      "prompt": "Audit FIXTURE_ROOT for bootstrap readiness without modifying it. Map stack, instruction files, command surfaces, source/test ownership, and unknowns. Use the bootstrap helpers when available, recover from weak index queries, and distinguish observed state from proposals.",
+      "expected_output": "Does not require AGENTS.md, CLAUDE.md, Node, or a fixed docs tree; finds Python and Rust manifests plus nested package scripts; returns evidence, unknowns, unavailable gates, and no mutations.",
+      "files": ["fixtures/portable-readiness"]
+    },
+    {
+      "name": "authorized-rehabilitation",
+      "prompt": "Bootstrap FIXTURE_ROOT within this accepted scope: verify the existing behavior, document the exact supported test command in README.md, prove legacy.tmp has no consumer, delete it, and leave unrelated files unchanged. Do not install, commit, or access network.",
+      "expected_output": "Runs the existing test, updates only README.md, deletes only the proved-unreferenced transient file, reruns verification, reports exact evidence, and does not expand into CI, dependencies, or new agent files.",
+      "files": ["fixtures/authorized-rehabilitation"]
+    }
+  ]
+}

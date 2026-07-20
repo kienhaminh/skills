@@ -7,7 +7,7 @@
   "fidelity": ["copy", "flow"],
   "mocked": ["authenticated operator", "API response"],
   "not_proven": ["authorization", "real API", "performance"],
-  "status": "approved",
-  "approval": "user",
+  "status": "proposed",
+  "approval": null,
   "baseline_digest": "sha256:36fce49c37ed4e34095564d6d59e013f2ccd53ba9ae6ca722ec71a14cfff1333"
 }

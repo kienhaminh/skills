@@ -9,7 +9,7 @@ Run one low-cost agent to inspect machine/repo capabilities. Persist:
 - global sanitized profile: `~/.codex/graphflow-profiles/machine.json`;
 - repo overlay: `.codex/graphflow-profile.json`.
 
-Use `python3 <skill-dir>/scripts/profile_environment.py --global-output <path> --repo-output <path>`. Refresh only when stale or environment drift matters.
+Use `python3 <skill-dir>/scripts/profile_environment.py --repo <repo> --global-output <path> --repo-output <path>`. Refresh only when stale or environment drift matters.
 
 Allowed: OS/architecture, CPU/RAM class, free disk, tool versions, container/browser availability, repo size/languages/test commands, worktree support. Exclude environment values, credentials, process arguments, serials, arbitrary user files, and unrelated paths.
 

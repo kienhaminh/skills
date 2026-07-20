@@ -21,6 +21,7 @@ assert SPEC and SPEC.loader
 BROKER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(BROKER)
 import run_workflow as RUNTIME
+from skills.graphflow.evals.fixture_support import approve_template_for_execution
 
 
 class DecompositionBrokerTests(unittest.TestCase):
@@ -49,6 +50,7 @@ class DecompositionBrokerTests(unittest.TestCase):
                 item["retry"]["attempts"] = 0
         graph["lifecycle"]["status"] = "active"
         graph_path.write_text(json.dumps(graph, indent=2) + "\n", encoding="utf-8")
+        approve_template_for_execution(self.workflow, self.repo)
         BROKER.memory_state.command_init(self.workflow, self.repo)
         self.fake_codex = self.workflow / "runtime" / "fake-reviewer.py"
         self.fake_codex.parent.mkdir(parents=True, exist_ok=True)

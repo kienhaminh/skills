@@ -1,0 +1,8 @@
+{
+  "name": "ship-eval-no-plan",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

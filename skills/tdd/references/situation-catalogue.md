@@ -1,24 +1,26 @@
 # Situation catalogue — walk every applicable row, dispose of each
 
-The point of TDD is that the tests are the *complete* spec, not a sampler. So the test list is built
-by **enumeration, not intuition**: walk the catalogue below, and for the behaviour under test, every
-row that *could* occur becomes a line in your test list with an explicit disposition —
+The catalogue is a set of probes, not default product policy. Derive expected outcomes from accepted
+criteria, repository rules, and existing contracts. When a probe is applicable but its expected
+behavior is unspecified, mark it **open** and resolve the contract before writing that test.
+
+Build the test list by **enumeration, not intuition**: walk the catalogue below, and for the behavior
+under test, every row that could occur becomes a line with an explicit disposition —
 
 - **→ test** — you will write a test for it, or
-- **→ excluded** — with a reason from the short allow-list at the bottom. "Unlikely", "probably
-  fine", "edge case" are **not** valid reasons and are exactly the silent gaps this catalogue exists
-  to close.
+- **→ excluded** — with a reason from the allow-list at the bottom; or
+- **→ open** — applicable, but the authoritative outcome is not yet agreed.
 
 You do not write a test for every row — a pure function has no auth row — but you must *account for*
 every applicable row. A row you neither test nor consciously exclude is a bug you shipped.
 
 Start with the **Universal** section (applies to anything taking input), then add the sections that
-match what the behaviour is (a function, a query, an endpoint, a job). A story often spans several —
+match what the behavior is (a function, a query, an endpoint, a job). A story often spans several —
 an endpoint that enqueues a job pulls in C and D and E.
 
 ---
 
-## Universal — any behaviour that takes input
+## Universal — any behavior that takes input
 
 | Dimension | Concrete situations to enumerate |
 | --- | --- |
@@ -28,21 +30,21 @@ an endpoint that enqueues a job pulls in C and D and E.
 | Boundaries | min, max, max+1, off-by-one, the exact threshold on both sides |
 | Duplicates | the same item twice in one input; case/whitespace variants that should collapse |
 | Ordering | already-ordered, reverse-ordered, and whether output order is guaranteed (assert it) |
-| Idempotency | applying the operation twice equals applying it once |
-| Determinism | same input → byte-identical output (matters when a plain `===` compares downstream) |
+| Repetition | apply the operation twice; decide whether idempotency, duplication, or rejection is required |
+| Determinism | repeat the same input; decide whether output ordering/content must be stable |
 
-## Text / string input — this repo is Vietnamese, these bite
+## Text and string input
 
 | Dimension | Concrete situations |
 | --- | --- |
 | Casing | upper/lower/mixed collapse to one key where dedupe is the point |
 | Whitespace | leading, trailing, **inner** (collapsed or preserved? — decide and pin), tabs, newlines |
-| Diacritics | `não` must not become `nao`; `Đ`/`đ` must not fold to `d`; preserved through lower-casing |
-| **Unicode form** | the same visible name in **NFC vs NFD** (precomposed `ở` U+1EDF vs `o`+combining marks) — macOS/IMEs emit NFD, so a plain-equality match forks them unless reconciled |
+| Diacritics | Accents and language-specific letters remain distinct unless the agreed contract normalizes them |
+| **Unicode form** | The same visible text in **NFC vs NFD**; filesystems and input methods may emit either, so decide and pin normalization behavior |
 | Injection-ish chars | quotes, `%`, `_` (SQL LIKE wildcards), backslash, angle brackets — for anything reaching SQL/HTML |
 | Size | empty, one char, and very long (past a column limit if one exists) |
 
-## Persistence / query behaviour (→ the level where the database is real)
+## Persistence / query behavior (→ the level where the database is real)
 
 A faked query builder cannot exercise any of these — if the criterion is about *what the SQL does*, it
 belongs at the level where the database is real, not a unit test that would "pass" against SQL that
@@ -65,36 +67,34 @@ throws. (Where that level lives and how to run it is in the repo's testing guide
 | Dimension | Concrete situations |
 | --- | --- |
 | Happy | correct status code **and** response body shape |
-| Auth ladder | **no token → 401** vs **valid-but-not-authorized → 403** vs authorized → allowed — these are three distinct tests, not one; do not collapse "unauthorized" |
+| Auth ladder | unauthenticated, authenticated-but-not-authorized, and authorized; assert the repository-defined outcome for each |
 | Guard wiring | the right guards are present **and in the right order** (an authz guard needs the authn guard's `req.user` first) |
 | Path/param validation | missing param, malformed id, wrong type |
 | Body validation | missing required field, wrong type, extra fields, wrong content-type |
-| Not found | the referenced resource does not exist → 404 |
-| Conflict / duplicate | submitting the same action twice → 409 / idempotent no-op |
+| Not found | the referenced resource does not exist; assert the contract-defined response |
+| Conflict / duplicate | submit the same action twice; decide whether conflict, idempotent success, or duplication is required |
 | Side-effect timing | an async constraint ("must not block") → assert the slow work is **not** done in-request |
 
 ## Queue / async / job
 
 | Dimension | Concrete situations |
 | --- | --- |
-| Enqueued once | the success path enqueues **exactly one** job (not zero, not two) |
-| Not enqueued | every rejected path (409, 403, 404, validation) enqueues **zero** jobs — assert it explicitly |
+| Enqueue cardinality | assert the contract-defined number of jobs for the success path |
+| Rejected path | assert the contract-defined queue side effect for validation, authorization, conflict, and missing-resource outcomes |
 | Payload | the job carries the right payload shape |
-| Dedupe | a duplicate trigger does not double-enqueue (dedupe key / singleton), or that gap is documented |
-| Enqueue failure | the queue rejecting is surfaced, not silently swallowed |
+| Dedupe | a duplicate trigger; test dedupe, duplication, or rejection only when the contract chooses one, otherwise mark it open |
+| Enqueue failure | the queue rejects; test surfacing, retry, compensation, or tolerance only when the contract defines it, otherwise mark it open |
 | Job runs | the handler actually runs and produces the observable effect → **integration**, separate from "was enqueued" |
 
 ## Cross-cutting — always ask these of every story
 
-- **The unhappy path the story omitted.** The story lists what should happen; you supply what happens
-  when it can't. This is the largest source of value in the conversion — the story says "returns 202",
-  you are the one who asks "and when the draft is already live? when the id is unknown? when the queue
-  is down?".
+- **The unhappy path the story omitted.** Probe what happens when the success path cannot complete.
+  Derive an outcome from an authoritative contract or keep the situation open for a product decision.
 - **The authorization angle.** Who must *not* be able to do this, and what do they get?
 - **The concurrency angle.** What if this runs twice at once? Even if you leave it to integration, name
   it — a silently-absent concurrency test reads as "covered".
-- **The "does nothing, quietly" angle.** Empty in → empty out with no throw; a no-op that must stay a
-  no-op.
+- **The empty-input angle.** Decide whether empty input is rejected, accepted as a no-op, or produces
+  an empty result; keep unspecified semantics `open`.
 - **The codebase's own invariants.** Reuse the rules existing tests already lock — a canonical form for
   a key, a dedupe key matched by plain equality, an is-live flag keyed off a nullable column. A story
   that would break one of these needs a test that pins the invariant. (The concrete ones for this repo
@@ -111,8 +111,9 @@ throws. (Where that level lives and how to run it is in the repo's testing guide
    itself a finding worth surfacing in the handoff.
 3. **Already locked by an existing test** — cite that test file.
 4. **Genuinely out of the story's scope** — beyond the acceptance criteria *and* not a latent bug the
-   behaviour would hit. If it *is* a latent bug (like NFC/NFD for a dedupe key), don't exclude it —
-   write it and flag it as inferred-beyond-AC for the user to rule on, rather than dropping it.
+   behavior would hit. If it *is* a plausible latent bug (like NFC/NFD for a dedupe key), keep it
+   open for the user to rule on rather than dropping it or encoding an outcome.
 
-An exclusion is a sentence in the test plan, not a silence. If you cannot write one of these four
-reasons for a row, the row is a test you owe.
+An exclusion is a sentence in the test plan, not a silence. If no exclusion applies and the expected
+outcome is agreed, the row is a test you owe. If the outcome is not agreed, keep it `open`; a red test
+cannot decide product policy.

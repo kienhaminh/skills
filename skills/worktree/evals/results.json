@@ -1,106 +1,15 @@
 {
-  "version": 2,
-  "iteration": 4,
-  "evaluated_at": "2026-07-19",
-  "skill": "worktree",
-  "reasoning_profile": "high",
-  "method": "Three fresh independent read-only with-skill runs were compared with the original three independent baseline runs. Agents received the same repository-grounded case prompt; only with_skill received the skill path. Agents did not receive the rubric or expected answer.",
-  "pass_threshold": 8,
-  "maximum_per_case": 10,
-  "runs": [
-    {
-      "case_id": "parallel-feature-dev",
-      "configuration": "with_skill",
-      "score": 10,
-      "maximum": 10,
-      "passed": true,
-      "failed_checks": []
-    },
-    {
-      "case_id": "parallel-feature-dev",
-      "configuration": "baseline",
-      "score": 7,
-      "maximum": 10,
-      "passed": false,
-      "failed_checks": ["compose-collision", "parallel-runner", "read-only-integrity"]
-    },
-    {
-      "case_id": "parallel-integration-debug",
-      "configuration": "with_skill",
-      "score": 10,
-      "maximum": 10,
-      "passed": true,
-      "failed_checks": []
-    },
-    {
-      "case_id": "parallel-integration-debug",
-      "configuration": "baseline",
-      "score": 9,
-      "maximum": 10,
-      "passed": true,
-      "failed_checks": ["read-only-integrity"]
-    },
-    {
-      "case_id": "safe-cleanup-handoff",
-      "configuration": "with_skill",
-      "score": 10,
-      "maximum": 10,
-      "passed": true,
-      "failed_checks": []
-    },
-    {
-      "case_id": "safe-cleanup-handoff",
-      "configuration": "baseline",
-      "score": 8,
-      "maximum": 10,
-      "passed": true,
-      "failed_checks": ["fresh-inventory", "process-ownership"]
-    }
-  ],
-  "summary": {
-    "with_skill": {
-      "score": 30,
-      "maximum": 30,
-      "pass_count": 3,
-      "case_count": 3,
-      "mean": 10.0
-    },
-    "baseline": {
-      "score": 24,
-      "maximum": 30,
-      "pass_count": 2,
-      "case_count": 3,
-      "mean": 8.0
-    },
-    "skill_score_delta": 6
-  },
-  "token_efficiency": {
-    "skill": {
-      "before_words": 872,
-      "after_words": 680,
-      "word_reduction_percent": 22.0,
-      "before_bytes": 6192,
-      "after_bytes": 4915,
-      "byte_reduction_percent": 20.6
-    },
-    "with_skill_responses": {
-      "before_words": 6035,
-      "after_words": 2781,
-      "word_reduction_percent": 53.9,
-      "before_bytes": 50913,
-      "after_bytes": 24140,
-      "byte_reduction_percent": 52.6
-    }
-  },
-  "grader_updates": [
-    "Patterns accept semantically equivalent wording for no web unit-test script, per-worktree databases, dedicated worker sessions, solo reruns, cleanup gates, and process ownership.",
-    "Patterns accept multiline git worktree prune --dry-run and the explicit phrase Nothing was executed.",
-    "The rubric, point weights, prompts, pass threshold, and baseline raw responses were unchanged."
-  ],
-  "limitations": [
-    "This is a directional six-run benchmark, not a statistically powered measurement.",
-    "The deterministic regex grader measures explicit evidence in the response; it does not execute the proposed plans or prove every command succeeds.",
-    "Final with-skill runs used the live dirty checkout; the three unrelated documentation edits were preserved and treated as occupied state.",
-    "Output size is measured as words and UTF-8 bytes, a transparent proxy rather than provider-specific tokenizer counts."
+  "evaluated_at": "2026-07-20",
+  "method": "Fresh agents ran read-only planning and explicitly authorized parallel execution on the portable fixture; temporary paths were sanitized from this record.",
+  "status": "pass",
+  "evidence": [
+    "selected the repository-owned integration base and sibling task branches",
+    "preserved the dirty operator checkout",
+    "allocated distinct application ports, test databases, cache directories, and log directories",
+    "used literal --slot-env mappings through worktree_matrix.py",
+    "kept install, creation, integration, cleanup, pruning, and deletion behind their authority gates",
+    "provided checkable owner handoffs and confirmed repository state unchanged during planning",
+    "created two sibling worktrees and ran both repository tests concurrently with isolated slot resources",
+    "retained the dirty operator file, worktrees, branches, generated logs, and summary because cleanup was not authorized"
   ]
 }

@@ -1,4 +1,4 @@
 interface:
   display_name: "Implement"
-  short_description: "Write production code for a story, plan, or red tests and prove it works"
-  default_prompt: "Use $implement to write the production code for this story/plan/failing tests and prove it works."
+  short_description: "Implement an agreed target and prove behavior"
+  default_prompt: "Use $implement to satisfy this agreed story, plan, or red-test contract with the smallest coherent change and prove the result."

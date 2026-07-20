@@ -1,58 +1,50 @@
 ---
 name: brainstorming
-description: Decompose an ambiguous, high-stakes, or multi-variable problem into a labelled problem tree, solve its leaves, and synthesize one answer. Use for open-ended life, business, product, strategy, or root-cause questions, including requests to brainstorm, phân rã, mổ xẻ, or tư duy có cấu trúc. Not for a concrete code-feature plan (use $grill-me) or a specific code failure (use $debugging).
+description: Solve ambiguous, high-stakes, or multi-variable questions with a labelled problem tree. Use for open-ended life, business, product, strategy, and root-cause reasoning; route concrete feature briefs to $grill-me and specific failures to $debugging.
 ---
 
-# Brainstorming — recursive problem-tree
+# Solve a problem tree
 
-Pipeline: **Root → Expand (best-first, Rumsfeld per node) → Solve → Synthesize**. Output = a labelled markdown tree that ends in an actual answer to the root. The tree is scaffolding; the answer is the product.
+Use **Root → Expand → Solve → Synthesize**. The tree is scaffolding; one answer to the root is the
+deliverable.
 
-## Calibrate first
+## Calibrate
 
-Depth ∝ ambiguity × stakes × how reversible the decision is. Judge, don't ritual:
+Scale depth with ambiguity, stakes, and irreversibility:
 
-- **Light** — one clear question, few unknowns: root + one split (2–3 branches), solve, answer. A dozen lines.
-- **Full** — tangled, high-stakes, many interacting unknowns: expand several levels best-first, checkpoint the pivotal unknowns with the user, solve leaves, synthesize. Read `references/playbook.md` first.
+- **Light:** one split with two or three branches, then answer.
+- **Full:** several best-first expansions with user checkpoints at pivotal unknowns. Read
+  [playbook.md](references/playbook.md) before Full mode.
 
-Don't over-split. A node that is directly answerable is a **leaf** — answer it, don't decompose it for symmetry.
+A directly answerable node is a leaf. Complete calibration when the root is one sharp sentence and
+the selected depth can plausibly change its answer.
 
-## The loop
+## Run the loop
 
-1. **Root (A).** Write the problem as one sharp sentence, label it `A`. If the ask is vague, sharpen it first — a fuzzy root grows a fuzzy tree.
+1. **Root (`A`).** State the exact question, decision, scope, and known constraints.
+2. **Expand.** Apply the Rumsfeld matrix as a lens:
+   - known knowns ground the node;
+   - known unknowns become candidate child branches;
+   - unknown knowns become explicit `assumed:` statements;
+   - unknown unknowns get one pre-mortem, inversion, or absent-stakeholder probe.
+   Emit two to four materially different branches.
+3. **Rank.** Expand the frontier by `uncertainty × impact on A`. Record low-leverage branches as
+   pruned.
+4. **Stop.** Make a node a leaf when it is answerable, further division cannot change `A`, or it is
+   outside scope.
+5. **Solve.** Give every leaf a concrete answer, finding, or decision with evidence for checkable
+   claims.
+6. **Synthesize.** Roll leaf answers through their parents into one direct answer to `A`, its
+   load-bearing assumptions, and the fact that would most change it.
 
-2. **Expand a node** by applying the **Rumsfeld matrix** *as a lens to generate branches* (the four quadrants are NOT the four branches):
-   - **Known knowns** → assert as grounding: settled facts/constraints for this node. Not a branch.
-   - **Known unknowns** → these become the child branches (and the questions worth asking). This is the engine — decomposition is mostly "what don't we know yet that we could."
-   - **Unknown knowns** → tacit assumptions you're leaning on. Surface each as an explicit stated assumption — a silent assumption is a bug.
-   - **Unknown unknowns** → run one generative probe to find branches you'd have missed: **pre-mortem** ("6 months on this failed — why?"), **inversion** ("what would make this whole branch irrelevant?"), or "who/what haven't we considered?".
+Ask the user only at a pivotal unknown that evidence cannot resolve. Use the available user-input
+mechanism with two to four concrete options and one recommendation. In a non-interactive run, choose
+the safest plausible assumption, mark it `assumed:`, and continue.
 
-   Emit **2–4 branches** per split — "clear enough", not exhaustive. Over-branching early is the failure mode the user pre-flagged.
+## Label and present
 
-3. **Rank the frontier, descend best-first.** Score each open node by **uncertainty × impact-on-the-root-answer**. Expand the highest-leverage node next; ignore low-leverage ones (say so — a pruned branch is a decision, not an oversight). This is why you don't need every branch up front.
+Use stable IDs: `A`; children `B`, `C`, `D`; deeper nodes `B1`, `B2`, then `B1-1`. Render a nested
+Markdown list so the user can steer by ID. Keep labels terse and converse in the user's language.
 
-4. **Stop expanding a node** when any holds: it's directly answerable/actionable · splitting it further won't change the decision · it's out of scope. Then it's a leaf.
-
-5. **Solve the leaves.** Give each leaf a concrete answer/finding/decision, with evidence where a claim is checkable.
-
-6. **Synthesize up to A.** Roll leaf answers back through their parents into **one answer to the root question**, plus the key assumptions it rests on and what would change it. A tree with no answer at the top is unfinished.
-
-## Node-ID scheme
-
-Stable, referenceable labels. Root is `A`; A's children are the next capitals `B, C, D…`; every deeper split appends the child's index to the parent (add a hyphen once the id already ends in a digit):
-
-```
-A  ─┬─ B  ─┬─ B1 ─┬─ B1-1
-    │      │      └─ B1-2
-    ├─ C   └─ B2
-    └─ D
-```
-
-Render the tree as a nested markdown list with each node's id, a one-line label, and — for leaves — its answer. Update and re-show the tree as it grows so the user can point at `B1-2` and steer.
-
-## Rules
-
-- **Converge.** The deliverable is the answer to `A`, not the tree. If you're drawing branches and not closing in on an answer, stop and synthesize what you have.
-- **Uncertain → ask (with options) or state the assumption in the tree.** At a pivotal unknown, ask via AskUserQuestion with 2–4 concrete options, one **(Recommended)**; don't interrogate every node.
-- Chat in the user's language. Keep node labels terse.
-- Non-interactive run: pick the best assumption at each pivotal unknown, mark it `assumed:` in the tree, and proceed.
-- Save the tree to a file only if the user asks or the problem is large enough to outlive the chat.
+The brainstorm is complete only when every open node is solved, pruned, or explicitly blocked and
+the final synthesis answers `A`. Return the tree in chat; save it only when the user requests a file.

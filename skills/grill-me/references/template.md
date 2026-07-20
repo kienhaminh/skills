@@ -1,13 +1,13 @@
 # Deliverable template
 
-Create `docs/plans/active/<topic-kebab>.md`, in English. In Light mode, sections may
-shrink (risks as a paragraph, fewer directions) but none may be silently omitted — an
-empty section is a claim, and it gets checked.
+Use the repository's planning location and language. If none exists, return this template in chat
+unless the user requested a file. In Light mode, sections may shrink, but each remains present or is
+explicitly marked not applicable.
 
 ```markdown
 # <Topic> — brainstorm & implementation sketch
 Date: YYYY-MM-DD. Origin: grill-me session. Status: sketch (not a full plan).
-Target path: docs/plans/active/<topic-kebab>.md
+Target: <repository plan path, requested file, or chat>
 
 ## Ask & sharpened goal
 Initial request verbatim; sharpened goal + Done test; unknowns surfaced (Rumsfeld)
@@ -38,5 +38,5 @@ claims full certainty — that claim gets checked.
 Adjacent ideas deliberately not done — one line each, so they aren't relitigated.
 ```
 
-This sketch is lighter than a full plan; if execution will span sessions, offer to
-upgrade it to the `docs/PLANS.md` structure.
+This sketch is lighter than a full execution plan; if work will span sessions, adapt it to the
+repository's durable planning contract.

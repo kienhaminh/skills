@@ -123,6 +123,24 @@ def parse_env(values: list[str]) -> dict[str, str]:
     return env
 
 
+SLOT_FIELDS = {"slot", "name", "port_offset", "path", "branch", "head"}
+
+
+def render_slot_env(values: list[str], context: dict[str, str]) -> dict[str, str]:
+    templates = parse_env(values)
+    rendered: dict[str, str] = {}
+    for key, template in templates.items():
+        fields = set(re.findall(r"\{([A-Za-z_][A-Za-z0-9_]*)\}", template))
+        unknown = fields - SLOT_FIELDS
+        if unknown:
+            raise ValueError(f"invalid --slot-env field(s) for {key}: {sorted(unknown)!r}")
+        try:
+            rendered[key] = template.format_map(context)
+        except (KeyError, ValueError) as error:
+            raise ValueError(f"invalid --slot-env template for {key}: {template!r}") from error
+    return rendered
+
+
 def safe_name(branch: str, path: Path) -> str:
     source = path.name if branch == "(detached)" else branch
     return re.sub(r"[^A-Za-z0-9_.-]+", "-", source).strip("-") or "worktree"
@@ -150,6 +168,7 @@ async def run_one(
     item: dict[str, Any],
     command: list[str],
     extra_env: dict[str, str],
+    slot_env_values: list[str],
     port_step: int,
     log_dir: Path,
     semaphore: asyncio.Semaphore,
@@ -160,13 +179,20 @@ async def run_one(
     async with semaphore:
         env = os.environ.copy()
         env.update(extra_env)
-        env.update(
-            {
-                "WORKTREE_SLOT": str(slot),
-                "WORKTREE_NAME": name,
-                "WORKTREE_PORT_OFFSET": str(slot * port_step),
-            }
-        )
+        context = {
+            "slot": str(slot),
+            "name": name,
+            "port_offset": str(slot * port_step),
+            "path": str(path),
+            "branch": str(item["branch"]),
+            "head": str(item["head"]),
+        }
+        env.update(render_slot_env(slot_env_values, context))
+        env.update({
+            "WORKTREE_SLOT": context["slot"],
+            "WORKTREE_NAME": context["name"],
+            "WORKTREE_PORT_OFFSET": context["port_offset"],
+        })
         print(f"START slot={slot} path={path} log={log_path}", flush=True)
         with log_path.open("wb") as log_file:
             process = await asyncio.create_subprocess_exec(
@@ -195,6 +221,19 @@ async def run_one(
 
 async def run_matrix(args: argparse.Namespace, items: list[dict[str, Any]]) -> int:
     started_at = datetime.now(timezone.utc).isoformat()
+    for slot, item in enumerate(items):
+        path = Path(item["path"])
+        render_slot_env(
+            args.slot_env,
+            {
+                "slot": str(slot),
+                "name": safe_name(item["branch"], path),
+                "port_offset": str(slot * args.port_step),
+                "path": str(path),
+                "branch": str(item["branch"]),
+                "head": str(item["head"]),
+            },
+        )
     log_dir = Path(args.log_dir).resolve() if args.log_dir else Path(
         tempfile.mkdtemp(prefix="worktree-")
     )
@@ -204,7 +243,10 @@ async def run_matrix(args: argparse.Namespace, items: list[dict[str, Any]]) -> i
     semaphore = asyncio.Semaphore(args.max_parallel)
     tasks = [
         asyncio.create_task(
-            run_one(slot, item, args.command, args.extra_env, args.port_step, log_dir, semaphore)
+            run_one(
+                slot, item, args.command, args.extra_env, args.slot_env,
+                args.port_step, log_dir, semaphore,
+            )
         )
         for slot, item in enumerate(items)
     ]
@@ -243,6 +285,12 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--port-step", type=int, default=100)
     run.add_argument("--log-dir", help="output directory; defaults to a new system temp directory")
     run.add_argument("--env", dest="env_values", action="append", default=[], help="shared KEY=VALUE")
+    run.add_argument(
+        "--slot-env",
+        action="append",
+        default=[],
+        help="per-worktree KEY=template using {slot}, {name}, {port_offset}, {path}, {branch}, or {head}",
+    )
     run.add_argument("command", nargs=argparse.REMAINDER)
     return root
 

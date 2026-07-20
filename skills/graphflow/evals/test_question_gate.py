@@ -19,6 +19,7 @@ SPEC = importlib.util.spec_from_file_location("graphflow_question_gate", ROOT / 
 assert SPEC and SPEC.loader
 GATE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(GATE)
+from skills.graphflow.evals.fixture_support import complete_clear_review
 
 
 class QuestionGateTests(unittest.TestCase):
@@ -42,13 +43,19 @@ class QuestionGateTests(unittest.TestCase):
         }
         review_path = self.workflow / "question-review.json"
         review = json.loads(review_path.read_text(encoding="utf-8"))
+        complete_clear_review(review)
         review["graph_digest"] = GATE.question_surface_digest(graph)
         review["reviewer"]["agent_id"] = "fresh-test-challenger"
+        review["reviewed_at"] = "2026-07-20T00:00:00Z"
         self.write(graph_path, graph)
         self.write(review_path, review)
         return graph, review
 
     def test_locked_review_is_current_and_semantic_drift_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "locked|digest"):
+            GATE.validate(self.workflow)
+        self.prepare_review()
+        self.assertTrue(GATE.lock(self.workflow)["locked"])
         self.assertTrue(GATE.validate(self.workflow)["valid"])
         graph_path = self.workflow / "graph.json"
         graph = json.loads(graph_path.read_text(encoding="utf-8"))

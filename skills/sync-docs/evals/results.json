@@ -1,0 +1,14 @@
+{
+  "evaluated_at": "2026-07-20",
+  "method": "Fresh agents ran the current skill in audit-only mode on descriptive-drift and binding-rule fixtures.",
+  "status": "pass",
+  "evidence": [
+    "discovered PRODUCT.md as the repository-owned durable owner",
+    "classified the 4100 versus 4200 claim as descriptive drift",
+    "returned exact proposed wording and code plus test evidence in chat",
+    "found no binding contradiction or unverified claim",
+    "left HEAD and the working tree unchanged in both cases",
+    "classified a documented maximum of 10 versus implemented and tested 12 as a binding-rule contradiction",
+    "preserved the authoritative rule and requested a maintainer decision instead of normalizing documentation to code"
+  ]
+}

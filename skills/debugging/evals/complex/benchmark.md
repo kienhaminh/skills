@@ -1,12 +1,14 @@
 # Complex static-debugging benchmark
 
+Historical snapshot for the prior 215-word skill. It is retained for reproducibility, not as current-skill evidence; current forward evidence is in `../results.json`.
+
 Evaluated: 2026-07-19
 
 Model: `gpt-5.6-terra`; reasoning profiles: `low`, `medium`.
 
 Method: three isolated, expensive-to-reproduce fixtures (lost update, retry after an external side effect, and cross-tenant cache collision). Natural prompts did not encode the workflow. Runs were blind, read-only, and independently graded for diagnosis quality plus a 200-word output limit.
 
-## Current compact skill
+## Evaluated compact skill snapshot
 
 | Profile | With skill | Baseline | Delta | With-skill pass | Baseline pass |
 | --- | ---: | ---: | ---: | ---: | ---: |

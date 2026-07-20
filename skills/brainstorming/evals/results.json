@@ -1,0 +1,12 @@
+{
+  "evaluated_at": "2026-07-20",
+  "method": "A fresh agent answered the published strategy prompt with the current skill.",
+  "status": "pass",
+  "evidence": [
+    "built a stable labelled tree with known and assumed facts",
+    "ranked and pruned branches",
+    "answered every leaf and synthesized one recommendation",
+    "named the fact most likely to change the answer",
+    "created no file or external effect"
+  ]
+}

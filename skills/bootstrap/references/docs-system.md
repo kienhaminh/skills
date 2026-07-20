@@ -29,22 +29,17 @@ Split a file that mixes these needs. Binding rules may link to all four types bu
 | Owner | Contains | Excludes |
 | --- | --- | --- |
 | Root README | Prerequisites, setup, run, common commands | Architecture narrative |
-| `AGENTS.md` | Shared source-tree map, reading order, binding instructions | Duplicated runbook text |
-| `CLAUDE.md` | Claude entrypoint: the shared map plus minimal declared Claude-specific protocol | An independent policy fork |
-| `docs/README.md` | Trust order, index, current/history labels | Full specifications |
-| `docs/architecture/` | Current system, boundaries, data/control flow, decisions | Product backlog |
-| `docs/architecture/decisions/` | Small ADRs: Context, Decision, Status, Consequences | Rewritten or erased history |
-| `docs/design/` | Product/domain/UI rules appropriate to the project | Runtime setup |
-| `docs/CONVENTIONS.md` | Code patterns verified in the checkout | Aspirational style |
-| `docs/SECURITY.md` | Binding controls, threat boundaries, known gaps | Generic checklist dumps |
-| `docs/TESTING.md` | Suite boundaries, locations, commands, fixtures | General testing philosophy |
-| `docs/DEBUG.md` | Repro workflow, known traps, inspection routes | Permanent architecture |
-| `docs/OBSERVATION.md` | Logs, health, metrics/tracing scope | Vendor-first shopping list |
-| `docs/PLANS.md` | Plan threshold, template, lifecycle, evidence bar | Active task content |
-| `docs/LESSONS.md` | Reusable rules paid for by mistakes | One-off bug history |
-| `docs/plans/active/` | Multi-session executable work | Completed history |
-| `docs/plans/completed/` | Outcomes and abandoned decisions | Current instructions |
-| `docs/plans/tech-debt.md` | Known, evidenced, unscheduled gaps | Surprise findings without proof |
+| Agent entrypoint | Source-tree map, reading order, binding instructions | Duplicated runbook text |
+| Docs index | Trust order, owners, current/history labels | Full specifications |
+| Architecture owner | Current system, boundaries, data/control flow, decisions | Product backlog |
+| Decision log | Small ADRs: Context, Decision, Status, Consequences | Rewritten or erased history |
+| Product/domain owner | Product, domain, and UI rules | Runtime setup |
+| Convention owner | Code patterns verified in the checkout | Aspirational style |
+| Security owner | Binding controls, threat boundaries, known gaps | Generic checklist dumps |
+| Testing owner | Suite boundaries, commands, fixtures | General testing philosophy |
+| Debugging owner | Reproduction, known traps, inspection routes | Permanent architecture |
+| Operations owner | Logs, health, metrics, tracing, runbooks | Vendor-first shopping list |
+| Planning owner | Plan threshold, lifecycle, active/completed work, debt | Durable architecture |
 
 Create only owners the project needs. Use folder-level indexes when a directory contains mixed generations or more than a few documents.
 
@@ -52,7 +47,10 @@ Model architecture with **C4** zoom levels and an **arc42 Building Block View**.
 
 ## Coding-agent entrypoints
 
-Always create root `AGENTS.md` and `CLAUDE.md`. Follow [agent-entrypoints.md](agent-entrypoints.md) as the generation and merge contract. In an inherited repository, complete a missing pair without discarding valid scoped instructions.
+Discover the coding-agent entrypoints already owned by the repository. Preserve them and keep shared
+facts linked to one authoritative owner. Create a new entrypoint only when the user requests it or the
+selected agent tooling requires it. When creating or synchronizing entrypoints, follow
+[agent-entrypoints.md](agent-entrypoints.md) as the merge contract.
 
 Use one compact shared operating map:
 
@@ -62,9 +60,13 @@ Use one compact shared operating map:
 - binding reuse, convention, security, testing, debugging, and cleanup gates;
 - repository-specific safety constraints and links to their authoritative owners.
 
-Read existing entrypoints before setup, but render their final `## Source tree` only after all source and durable docs are stable. Expand `docs/` to show every top-level document owner and routing directory, then copy the reference's canonical core block byte-for-byte. Make shared sections identical by default. If a tool requires distinct protocol, keep the shared map synchronized, isolate the minimal delta under a clearly named section, declare its owner, and add a deterministic drift check. Never maintain two independent descriptions of architecture or commands.
+Read existing entrypoints before setup, but render any final source tree only after source and durable
+docs are stable. When a synchronized set is in scope, keep repository-owned shared sections aligned.
+Isolate tool-specific protocol under a named section with an owner and deterministic drift check.
 
-Add nested `AGENTS.md` or `CLAUDE.md` only for real subtree-scoped overrides. State their scope and inheritance explicitly; do not repeat root rules.
+When the repository already uses `AGENTS.md` or `CLAUDE.md`, add a nested file only for a real
+subtree-scoped override. State scope and inheritance explicitly and keep shared rules in the root
+owner.
 
 ## Writing rules
 
@@ -73,6 +75,7 @@ Add nested `AGENTS.md` or `CLAUDE.md` only for real subtree-scoped overrides. St
 - Describe implemented state in present tense; label proposals and future work.
 - Prefer commands with expected outcomes over prose instructions.
 - Keep one fact in one owner and link to it elsewhere.
-- Keep both coding-agent entrypoints present and verify their shared content cannot drift silently.
+- Keep every repository-owned coding-agent entrypoint accurate; when a synchronized pair exists,
+  verify its shared content cannot drift silently.
 - Update the index whenever adding or moving a durable doc.
 - Validate relative links after every reorganization.

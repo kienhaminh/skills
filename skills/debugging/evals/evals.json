@@ -1,0 +1,17 @@
+{
+  "skill_name": "debugging",
+  "evals": [
+    {
+      "name": "current-retry-side-effect-diagnosis",
+      "prompt": "Diagnose why a retried notification job can send duplicate email in FIXTURE_ROOT. Keep the task diagnosis-only, distinguish facts from inferences, falsify the strongest alternative, and do not modify files.",
+      "expected_output": "Finds the side effect before durable dedupe state, explains the retry chain and violated invariant, bounds confidence, names confirmation evidence, and leaves the checkout unchanged.",
+      "files": ["complex/fixtures/retry-side-effect"]
+    },
+    {
+      "name": "inconclusive-static-evidence",
+      "prompt": "Two production workers intermittently disagree, but FIXTURE_ROOT contains only two equally plausible adapters and no runtime logs. Diagnose only if evidence discriminates; otherwise return the honest inconclusive terminal and exact next observation. Do not modify files.",
+      "expected_output": "Returns inconclusive without naming a root cause, ranks surviving hypotheses, states shared static evidence, and requests one discriminating runtime observation.",
+      "files": ["fixtures/inconclusive-adapters"]
+    }
+  ]
+}

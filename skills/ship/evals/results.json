@@ -1,0 +1,50 @@
+{
+  "evaluated_at": "2026-07-20",
+  "method": "Fresh agents executed the installed skill against repositories created by prepare_fixture.py. Results were verified from each repository's Git state after the run.",
+  "results": [
+    {
+      "case": "happy-path-close-plan",
+      "status": "pass",
+      "evidence": [
+        "npm run type-check passed",
+        "npm test passed with 2 tests",
+        "active record moved to completed and begins with a dated Outcome",
+        "one feat(pagination) commit contains implementation, test, and record move",
+        "docs/domain.md was unchanged",
+        "publication stopped because no remote exists"
+      ]
+    },
+    {
+      "case": "red-gate-halts",
+      "status": "pass",
+      "evidence": [
+        "npm run type-check passed",
+        "npm test failed at the planted equality boundary",
+        "working tree remained only M src/token.mjs",
+        "active record remained active",
+        "no staged diff or new commit was created"
+      ]
+    },
+    {
+      "case": "no-plan-small-change",
+      "status": "pass",
+      "evidence": [
+        "npm test passed with 1 test",
+        "one docs commit contains only README.md",
+        "no task record or lesson was invented",
+        "publication stopped because no remote exists"
+      ]
+    },
+    {
+      "case": "push-only-authority",
+      "status": "pass",
+      "evidence": [
+        "npm test passed with 1 test",
+        "one docs commit contains only README.md",
+        "pushed only the current task branch to the configured local sandbox remote",
+        "proved the local and remote branch SHA were identical",
+        "created no pull request and performed no merge, deploy, force push, or remote creation"
+      ]
+    }
+  ]
+}
