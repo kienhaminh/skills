@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "workflow_id": "publish-queue-bulk-retry",
+  "level": "medium",
+  "checks": [
+    {
+      "id": "CHK-R1-CONTRACT",
+      "requirement_ids": ["R1"],
+      "critical": true,
+      "class": "boundary",
+      "argv": ["pnpm", "--dir", "packages/contracts", "test", "--", "publish-retry.contract"],
+      "cwd": "repo",
+      "env": {},
+      "expected_exit": 0,
+      "timeout_seconds": 120,
+      "watch": [{"root": "repo", "path": "packages/contracts"}],
+      "attestation": "evidence/attestations/CHK-R1-CONTRACT.json",
+      "verifier_node": "F"
+    },
+    {
+      "id": "CHK-R2-SERVER-NEGATIVE",
+      "requirement_ids": ["R2"],
+      "critical": true,
+      "class": "negative",
+      "argv": ["pnpm", "--dir", "apps/server", "test", "--", "bulk-retry.negative", "--runInBand"],
+      "cwd": "repo",
+      "env": {},
+      "expected_exit": 0,
+      "timeout_seconds": 120,
+      "watch": [{"root": "repo", "path": "apps/server/src/publish"}],
+      "attestation": "evidence/attestations/CHK-R2-SERVER-NEGATIVE.json",
+      "verifier_node": "F"
+    },
+    {
+      "id": "CHK-R3-UI",
+      "requirement_ids": ["R3"],
+      "critical": true,
+      "class": "primary",
+      "argv": ["pnpm", "--dir", "apps/web", "test", "--", "bulk-retry.ui", "--runInBand"],
+      "cwd": "repo",
+      "env": {},
+      "expected_exit": 0,
+      "timeout_seconds": 120,
+      "watch": [{"root": "repo", "path": "apps/web/app/admin/publish-queue"}],
+      "attestation": "evidence/attestations/CHK-R3-UI.json",
+      "verifier_node": "F"
+    },
+    {
+      "id": "CHK-R4-INTEGRATION",
+      "requirement_ids": ["R4"],
+      "critical": true,
+      "class": "integration",
+      "argv": ["pnpm", "--dir", "apps/server", "test:int", "--", "bulk-retry", "--runInBand"],
+      "cwd": "repo",
+      "env": {},
+      "expected_exit": 0,
+      "timeout_seconds": 180,
+      "watch": [
+        {"root": "repo", "path": "packages/contracts"},
+        {"root": "repo", "path": "apps/server/src/publish"}
+      ],
+      "attestation": "evidence/attestations/CHK-R4-INTEGRATION.json",
+      "verifier_node": "F"
+    },
+    {
+      "id": "CHK-R5-FALSIFICATION",
+      "requirement_ids": ["R5"],
+      "critical": true,
+      "class": "metamorphic",
+      "argv": ["pnpm", "--dir", "apps/server", "test", "--", "bulk-retry.metamorphic", "--runInBand"],
+      "cwd": "repo",
+      "env": {},
+      "expected_exit": 0,
+      "timeout_seconds": 180,
+      "watch": [
+        {"root": "repo", "path": "packages/contracts"},
+        {"root": "repo", "path": "apps/server/src/publish"}
+      ],
+      "attestation": "evidence/attestations/CHK-R5-FALSIFICATION.json",
+      "verifier_node": "F"
+    }
+  ],
+  "challenge_policy": {
+    "required_classes": ["negative", "boundary"],
+    "mutation_required": false
+  },
+  "separation_of_duties": {
+    "producer_nodes": ["B", "C", "D", "E"],
+    "verifier_nodes": ["F"],
+    "min_independent_verifiers": 1
+  },
+  "external_gate": {
+    "required": false,
+    "status": "not_required",
+    "artifact": null,
+    "digest": null,
+    "provenance": null
+  }
+}

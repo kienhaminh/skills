@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "workflow_id": "publish-queue-bulk-retry",
+  "status": "template",
+  "plan_digest": null,
+  "runner_digest": null,
+  "contract_digest": null,
+  "locked_at": null
+}

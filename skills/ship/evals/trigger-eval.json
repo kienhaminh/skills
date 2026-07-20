@@ -1,0 +1,23 @@
+[
+  {"query": "ok story phân trang search xong rồi, unit test với /verify xanh hết — chốt nó lại giúp mình: commit rồi mở PR", "should_trigger": true},
+  {"query": "the wiki-publish-phase-1 plan is done and everything's green. land it — close the plan, commit, open the PR against master", "should_trigger": true},
+  {"query": "mình làm xong feature upload file rồi, giờ dọn workflow: đóng plan trong active/, ghi outcome, tạo PR", "should_trigger": true},
+  {"query": "I finished the SSRF guard work on this branch, type-check and tests pass. ship it", "should_trigger": true},
+  {"query": "xong rồi nhé, giờ đẩy branch lên và tạo pull request vào master cho mình", "should_trigger": true},
+  {"query": "everything's done and I've addressed the code-review findings, wrap this up and get it into a PR", "should_trigger": true},
+  {"query": "hoàn tất task fix type-check rồi, commit theo convention của repo rồi mở PR giúp", "should_trigger": true},
+  {"query": "the ingestion-worker-watch-mode plan in active/ is finished — move it to completed with an outcome section and open the PR", "should_trigger": true},
+  {"query": "mình vừa code xong story admin publish draft, gate xanh hết, land lên GitHub đi", "should_trigger": true},
+  {"query": "close this out for me — the change works, now do the commit + PR and clean up the plan file", "should_trigger": true},
+
+  {"query": "commit tạm cái đang làm dở để lát nữa quay lại, chưa xong đâu chưa PR gì cả", "should_trigger": false},
+  {"query": "review the diff on my branch for bugs and convention issues before I decide to ship", "should_trigger": false},
+  {"query": "chuyển cái plan wiki-publish-phase-1.md này thành user story với acceptance criteria", "should_trigger": false},
+  {"query": "viết failing test trước cho story phân trang search theo kiểu TDD", "should_trigger": false},
+  {"query": "implement story admin publish draft, làm cho mấy cái red test xanh lên", "should_trigger": false},
+  {"query": "brainstorm vài hướng cho việc cho reader comment lên trang wiki", "should_trigger": false},
+  {"query": "đồng bộ domain.md với code sau khi mình đổi luồng draft->publish", "should_trigger": false},
+  {"query": "cái integration test publish-visibility đang đỏ, tìm nguyên nhân gốc giúp mình", "should_trigger": false},
+  {"query": "add a lesson to LESSONS.md about the turbo persistent-task env gotcha we just hit", "should_trigger": false},
+  {"query": "xem giúp mình cái PR #42 của đồng nghiệp, review rồi comment vào", "should_trigger": false}
+]

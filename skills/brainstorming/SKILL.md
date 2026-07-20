@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: Think through any hard, tangled, or open-ended problem by recursively decomposing it into a labelled problem-tree (A → B, C, D → B1, B2 → B1-1…), applying the Rumsfeld matrix at each node to generate branches, then solving the leaves and synthesizing back up to a real answer. Works on ANY domain, not just code — a life or career decision, a business / product / strategy trade-off, a pricing or hiring choice, a conceptual root-cause hunt ("why does X keep happening") across many possibilities, or a "how do we even approach X" where you keep going in circles. Use whenever the user faces a decision with many moving parts, a fuzzy question that needs structure before acting, or says "brainstorm this / phân rã / mổ xẻ / vẽ cây vấn đề / tư duy có cấu trúc" — even if they never name a tree. NOT for planning a concrete code feature in this repo (→ grill-me), and NOT for diagnosing a specific failing test, error, or bug in the code (→ debugging).
+description: Decompose an ambiguous, high-stakes, or multi-variable problem into a labelled problem tree, solve its leaves, and synthesize one answer. Use for open-ended life, business, product, strategy, or root-cause questions, including requests to brainstorm, phân rã, mổ xẻ, or tư duy có cấu trúc. Not for a concrete code-feature plan (use $grill-me) or a specific code failure (use $debugging).
 ---
 
 # Brainstorming — recursive problem-tree

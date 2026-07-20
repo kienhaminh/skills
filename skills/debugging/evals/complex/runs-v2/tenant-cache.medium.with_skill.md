@@ -1,7 +1,0 @@
-Diagnosis — high confidence (static analysis): `ProfileService` scopes database access by both `tenantId` and `userId`, but scopes its shared cache by `userId` alone. The cache key `profile:${userId}` therefore aliases profiles from different tenants that happen to use the same user ID.
-
-Causal chain: a request from tenant A for user U misses the process-wide cache, correctly loads A/U from the repository, and stores it under `profile:U`. A later request on the same long-lived process from tenant B for the same U reads that key and returns A/U immediately, without reaching the tenant-scoped repository query. This exactly explains why database traces remain correctly tenant-filtered, why the symptom requires overlapping IDs, and why it is confined to requests sharing a long-lived process.
-
-The incident's occasional nature is consistent with cache population/order and process affinity: a cross-tenant response occurs only when another tenant has already populated that key and the later request reaches the same cache instance. There is no evidence in the inspected code of a database tenant-filtering failure, and the repository call receives both identifiers. The documented tech-debt list contains no pre-existing tenant-isolation exception.
-
-Remaining runtime unknowns: the cache implementation and its deployment scope were not inspected, so this analysis cannot establish its exact lifetime or quantify frequency. They are not needed to establish the key-collision mechanism: any cache shared across requests can produce the reported anomaly.

@@ -1,53 +1,46 @@
 ---
 name: bootstrap
-description: Set up, map, clean, or rehabilitate a software repository around a user-selected technology stack using named software-engineering methods, mandatory reuse and placement decisions, enforceable code conventions, per-file source indexing, precise code navigation, safe legacy-resource removal, incremental restructuring, agent-oriented documentation, honest command surfaces, testing, debugging, security, and exploration affordances. Use when starting a codebase, understanding or standardizing an inherited repository, forcing agents to prefer simple existing code over speculative functions, components, classes, hooks, or abstractions, defining naming, module, complexity, duplication, or OOP rules, removing obsolete code or tooling, reorganizing modules or packages, choosing repo structure and developer tooling, creating a professional docs system, or making a project token-efficient for coding agents.
+description: Set up, map, clean, or rehabilitate a software repository using live evidence, reuse-first design, enforceable conventions, safe restructuring, code indexing, truthful commands, and synchronized AGENTS.md and CLAUDE.md entrypoints. Use for new or inherited codebases, repository cleanup or reorganization, architecture and documentation standardization, or making a project efficient for coding agents.
 ---
 
 # Bootstrap a codebase
 
-Build a repository another agent can understand, run, test, and change without reconstructing hidden context.
+Build a repository another agent can understand, run, test, and change without reconstructing hidden
+context.
 
 ## Establish the contract
 
-Extract the product shape, chosen stack, deployment target, constraints, and required quality gates from the request. Infer them from an existing checkout when possible. Ask only when a missing choice would materially change architecture or create an irreversible dependency.
+Read repository instructions and status first. Infer product shape, stack, deployment target,
+constraints, and quality gates from the request and checkout. Ask only when a missing choice would
+materially change architecture or create an irreversible dependency.
 
-Separate three states:
+Keep these states separate:
 
-- **Observed** — proven by files or commands.
-- **Requested** — explicitly chosen by the user.
-- **Proposed** — a recommendation awaiting implementation.
+- **Observed** - proven by files or commands.
+- **Requested** - explicitly chosen by the user.
+- **Proposed** - recommended but not implemented.
 
-Never document proposed behavior as implemented.
+Never document proposed behaviour as current.
 
-## Apply named methods
+Use the shortest applicable method chain from
+[scientific-methods.md](references/scientific-methods.md):
 
-Use the shortest applicable chain; read [scientific-methods.md](references/scientific-methods.md) for operational definitions and sources.
+`GQM -> Software Reflexion Model -> Information Hiding/Bounded Context -> C4/arc42 -> ADR -> Diataxis -> Information Foraging -> Repository Map -> LSP/SCIP`
 
-`GQM → Software Reflexion Model → Information Hiding/Bounded Context → C4/arc42 → ADR → Diátaxis → Information Foraging → Repository Map → LSP/SCIP`
+## Inspect and map the checkout
 
-- Use **GQM** to turn quality goals into questions and measurable gates.
-- Use a **Software Reflexion Model** to compare the intended architecture with dependencies recovered from source.
-- Use **Information Hiding**, **Bounded Contexts**, and **Stable Dependencies** to define source boundaries.
-- Use **C4** and the **arc42 Building Block View** to zoom from system to source boundaries without mixing abstraction levels.
-- Use **ADRs** for architecturally significant decisions and supersession history.
-- Use **Diátaxis** to separate tutorial, how-to, reference, and explanation.
-- Use **Information Scent**, a **Repository Map**, and **Precise Code Navigation** to minimize the read set.
-
-## Inspect before designing
-
-Preserve unrelated work. Read repository instructions and status first, then inspect manifests, locks, version pins, source roots, configs, CI, tests, env examples, containers, migrations, and existing docs.
-
-Run:
+Preserve unrelated work. Inspect manifests, locks, version pins, source roots, configs, CI, tests,
+environment examples, containers, migrations, and docs.
 
 ```bash
 python3 <skill-dir>/scripts/inspect_codebase.py --root <repo> --format markdown
 ```
 
-Use `rg --files` and targeted reads to verify anything the report cannot classify. Treat live code and executable configuration as stronger evidence than prose. Identify stale generations rather than merging them into the current design.
+Use `rg --files` and targeted reads to verify anything the report cannot classify. Treat live code
+and executable configuration as stronger evidence than prose; identify stale generations instead of
+merging them into the current design.
 
-## Build a checkout-derived code map
-
-Read [code-navigation.md](references/code-navigation.md). Generate evidence from the current tree instead of relying on memory or hand-written per-file summaries.
+Read [code-navigation.md](references/code-navigation.md), then generate a checkout-derived index:
 
 ```bash
 python3 <skill-dir>/scripts/index_codebase.py --root <repo> --format ndjson
@@ -55,149 +48,123 @@ python3 <skill-dir>/scripts/index_codebase.py --root <repo> --query "<task keywo
 python3 <skill-dir>/scripts/index_codebase.py --root <repo> --format stats --limit 20
 ```
 
-Index every supported source file by path, language, role, size, hash, leading keywords, top-level symbols, imports, and symbol line numbers. Use the query result only as a candidate read set:
+Use query results only as candidate reads. Follow the owning contract, definitions and references,
+implementation, nearest tests, and configuration. Prefer compiler/LSP/SCIP evidence, then structural
+tags, then `rg`. Regenerate after structural changes; do not commit indexes unless the repository
+owns them.
 
-1. Read the owning entrypoint or public contract.
-2. Follow definitions and references with LSP/SCIP when available.
-3. Read the implementation slice, its nearest tests, and owning configuration.
-4. Expand only when imports, runtime registration, or failing evidence crosses the boundary.
+## Reuse and place deliberately
 
-Prefer compiler/LSP/SCIP evidence over regex tags; prefer structural Tree-sitter/ctags tags over plain text search; use `rg` as the universal fallback. Regenerate the map after structural changes. Do not commit generated indexes unless the repository explicitly owns them.
+Read [reuse-placement.md](references/reuse-placement.md) before adding or materially extending a
+function, component, hook, class, service, schema, type, or module.
 
-## Gate every new symbol
+Apply `Search -> Reuse -> Extend -> Localize -> Extract`:
 
-Read [reuse-placement.md](references/reuse-placement.md) before adding or materially extending a function, method, component, hook, class, service, schema, type, or module.
+1. define behaviour, invariant, inputs, outputs, and side effects;
+2. search symbols, references, exports, tests, registries, and synonyms for an owner;
+3. reuse an exact contract or extend a cohesive owner;
+4. otherwise keep the implementation at the narrowest valid scope;
+5. extract only when current consumers prove a shared concept.
 
-Apply `Search → Reuse → Extend → Localize → Extract`:
+Record non-trivial decisions as `Intent / Search / Decision / Owner / Why`. Reject speculative
+options, pass-through layers, and abstractions without real consumers.
 
-1. Define the behavior, invariant, inputs, outputs, and side effects—not the proposed name.
-2. Search the live index, LSP symbols/references, exports, tests, registries, and lexical synonyms for an existing semantic owner.
-3. Reuse an exact contract; extend only when responsibility and change cadence remain cohesive.
-4. Otherwise keep the implementation at the narrowest valid scope. Promote it only when current evidence proves a shared concept.
-5. Reject speculative options, generic wrappers, pass-through layers, and abstractions without real consumers.
+## Make conventions enforceable
 
-Use **KISS**, **YAGNI**, **AHA**, **Rule of Three**, **Common Closure Principle**, and **Common Reuse Principle**. Prefer composition over configurable conditionals. Optimize measured hot paths and material complexity; do not trade readability for hypothetical performance.
+Read [code-conventions.md](references/code-conventions.md) before changing `CONVENTIONS.md`, naming,
+source boundaries, or budgets.
 
-For every non-trivial new symbol, retain a compact decision in the working notes or plan:
+Baseline the repository before setting thresholds. Split by responsibility, change reason, domain
+boundary, or dependency direction - never by line count alone. Every convention must name its scope,
+checkable rule, rationale, thresholds, exceptions, owner, and enforcement command. Keep one owner for
+each contract, schema, configuration fact, and domain rule.
 
-```text
-Intent: <behavior and invariant>
-Search: <queries and candidates inspected>
-Decision: reuse | extend | local | extract | replace
-Owner: <narrowest responsible file/module>
-Why: <contract, cohesion, dependency, and complexity evidence>
-```
+## Clean and reshape safely
 
-## Design enforceable conventions
+Read [cleanup-refactor.md](references/cleanup-refactor.md) before deleting, moving, splitting, or
+replacing resources.
 
-Read [code-conventions.md](references/code-conventions.md) before creating or rewriting `CONVENTIONS.md`, source roots, naming rules, or module budgets.
+Classify questioned code, docs, assets, dependencies, generated files, infrastructure, migrations,
+and data paths as **keep**, **migrate**, **archive**, **delete**, or **unknown**, with evidence. A name
+or zero search hits is never proof of safety.
 
-Use **Information Hiding**, **High Cohesion / Low Coupling**, **DRY**, **AHA**, **Rule of Three**, **SOLID**, **Law of Demeter**, **Cyclomatic Complexity**, **Cognitive Complexity**, and **CK Metrics** as decision vocabulary. Apply OOP rules only to object-oriented boundaries; do not manufacture classes or interfaces around simple data transformations.
+Before structural change:
 
-Baseline the current tree before setting thresholds. LOC is a screening signal, not a split algorithm: calibrate budgets from the repository distribution, mark generated/declarative exceptions, then ratchet toward the target. Split by responsibility, change reason, domain boundary, or dependency direction—not at an arbitrary line number.
+1. capture entrypoints, public contracts, runtime paths, and current gates;
+2. add characterization coverage where behaviour is unpinned;
+3. define the target tree and dependency direction;
+4. migrate one boundary and all consumers at a time;
+5. remove old resources only after replacement is proven.
 
-Every convention must specify:
+Never delete ambiguous data, migrations, secrets, user assets, compatibility surfaces, or deployment
+resources. Keep cleanup separate from unrelated feature work.
 
-- scope and stack-native naming;
-- a checkable rule and its rationale;
-- warning and failure thresholds where relevant;
-- explicit exceptions and their owner;
-- the formatter, linter, architecture test, clone detector, or CI command that enforces it.
+## Build the source of truth
 
-Prefer feature or bounded-context ownership with layers inside the boundary. Keep one authoritative representation of each contract, schema, configuration fact, and domain rule. Avoid generic dumping grounds such as `utils`, `common`, or `helpers` unless their domain and dependency direction are explicit.
+Read [docs-system.md](references/docs-system.md) and
+[agent-entrypoints.md](references/agent-entrypoints.md) before changing durable docs, `AGENTS.md`, or
+`CLAUDE.md`.
 
-## Clean and reshape deliberately
+Establish only justified owners:
 
-Read [cleanup-refactor.md](references/cleanup-refactor.md) before deleting resources, moving source roots, splitting packages, or replacing a legacy generation.
+1. root setup and command runbook;
+2. docs index with trust order and current-versus-historical routing;
+3. architecture, conventions, security, testing, debugging, and planning docs;
+4. active, completed, and debt locations;
+5. root `AGENTS.md` and `CLAUDE.md` routing to the same authoritative tree.
 
-Inventory code, docs, assets, scripts, dependencies, generated artifacts, infrastructure, CI, deployment, migrations, and data paths. Classify each questioned resource as **keep**, **migrate**, **archive**, **delete**, or **unknown**, with evidence. A filename or zero `rg` hits is a signal, never proof.
+Read existing entrypoints for binding rules at the start, but write their shared map last. Preserve
+non-conflicting rules, normalize equivalents, retain stricter compatible details, and surface
+conflicts. Copy the canonical core block from `agent-entrypoints.md` byte-for-byte, render the source
+tree from the final checkout, and keep shared sections identical unless an explicit tool-specific
+delta is necessary. Link; do not duplicate.
 
-Protect behavior before structural change:
+## Expose truthful operations
 
-1. Capture entrypoints, public contracts, runtime paths, and current gates.
-2. Add characterization coverage where behavior is not already pinned.
-3. Define the target tree and dependency direction.
-4. Move one boundary at a time; update imports, configs, tests, and docs together.
-5. Remove adapters and old resources only after all consumers migrate.
+Read [stack-patterns.md](references/stack-patterns.md) when choosing tooling. Add only capabilities
+the stack and scope justify:
 
-Prefer reversible moves and reviewable deletion sets. Never delete ambiguous data, migrations, secrets, user assets, compatibility surfaces, or deployment resources without proving ownership and replacement. Do not combine broad cleanup with unrelated feature work.
+- pinned runtime and package-manager versions;
+- canonical install, dev, build, type-check, lint, format, and test commands;
+- validated configuration and non-secret environment examples;
+- deterministic fakes, fixtures, seeds, and offline modes where needed;
+- reproducible local dependencies, migrations, schemas, and generated-client paths;
+- cheap health and structured logs before a monitoring stack;
+- fast default tests separated from infrastructure-dependent suites;
+- CI gates that run the same meaningful local commands.
 
-## Design the source of truth
-
-Keep the current code layout unless the user asked to restructure it. Prefer a compact documentation router over a large handbook. Apply the detailed pattern in [docs-system.md](references/docs-system.md).
-
-At minimum, establish:
-
-1. A root runbook for prerequisites, setup, run, and core commands.
-2. A root agent entrypoint that routes readers to authoritative files.
-3. A docs index that states trust order and marks current versus historical material.
-4. Architecture, code conventions, security, testing, debugging, and planning ownership.
-5. Active, completed, and debt locations for work state.
-
-Link; do not duplicate. Put product behavior, architecture, operational procedure, and temporary plans in different owners.
-
-## Complete the agent surface
-
-Select only the capabilities justified by the chosen stack and project scope. Read [stack-patterns.md](references/stack-patterns.md) when choosing tooling.
-
-Make these operations discoverable and truthful:
-
-- Pin runtime and package-manager versions.
-- Provide one canonical install, dev, build, type-check, lint, format, unit-test, integration-test, and end-to-end command where applicable.
-- Keep env examples beside their owning app; validate required config at startup.
-- Provide deterministic fakes, fixtures, seeds, and offline modes for external or AI services.
-- Make local dependencies reproducible with the smallest suitable mechanism.
-- Expose cheap health and structured logs before proposing a monitoring stack.
-- Preserve schemas, migrations, API contracts, generated-client commands, and data-inspection routes.
-- Separate fast default tests from infrastructure-dependent suites.
-- Encode the same gates in CI; never advertise a command that silently does nothing.
-
-Do not add a dependency merely because it appears in the reference. Match complexity to the repository's real risk and operating scale.
+Do not advertise no-op commands or add dependencies merely because a reference mentions them.
 
 ## Implement in dependency order
 
-1. Baseline behavior, commands, and working-tree state.
-2. Define GQM goals, questions, metrics, and stop conditions.
-3. Generate the file index and actual dependency view.
-4. Baseline size, complexity, coupling, cycles, and duplication; design the convention profile.
-5. Compare intended and actual boundaries with a Software Reflexion Model.
-6. Classify legacy resources and approve the target tree.
-7. Pin runtimes and package management.
-8. Establish source roots and shared boundaries.
-9. Migrate consumers, then remove superseded resources.
-10. Apply the reuse-and-placement gate before adding source symbols; record owned exceptions.
-11. Add config, local dependency setup, commands, test layers, and convention enforcement.
-12. Write C4/arc42 views, ADRs, and Diátaxis-routed docs from verified behavior.
-13. Add CI gates after local commands work.
-14. Regenerate indexes and repair broken references and links.
+1. Baseline behaviour, commands, working tree, and GQM stop conditions.
+2. Generate the source/dependency map and baseline boundaries, complexity, cycles, and duplication.
+3. Classify legacy resources and approve the target tree.
+4. Pin runtimes, package management, source roots, and shared contracts.
+5. Migrate consumers before removing superseded resources.
+6. Apply reuse/placement decisions to new symbols.
+7. Add configuration, local services, commands, tests, and convention enforcement.
+8. Write verified architecture, ADR, and Diataxis-routed docs.
+9. Add CI only after local gates work.
+10. Repair the supported gates, regenerate the final index, then finalize both agent entrypoints.
 
-Use existing generators only when their output matches the chosen architecture. Inspect generated changes before accepting them. Keep secrets out of committed files and browser bundles.
+Inspect generator output before accepting it. Keep secrets out of committed files and browser
+bundles.
 
-## Verify the setup
+## Verify
 
-Run the narrowest checks first, then the whole supported gate. Report unavailable infrastructure as unrun, not green.
+Run narrow checks first, then the supported full gate. Report unavailable infrastructure as unrun.
+Require evidence that:
 
-Require evidence for:
+- install, build, type-check, formatting/linting, and supported test layers are truthful;
+- startup, health, migration, seed, CI, workspace, and deployment paths still resolve;
+- moved or deleted resources have no remaining consumers;
+- the final source index and intended architecture match the checkout or record named debt;
+- conventions, boundaries, duplication, complexity, and reuse decisions are enforced;
+- internal documentation links resolve and only intended working-tree changes remain;
+- `AGENTS.md` and `CLAUDE.md` contain the current source tree and exact canonical core block, preserve
+  compatible prior rules, and either share the same operating map or document tested deltas.
 
-- clean install from the declared lockfile;
-- build or compile;
-- type-check and lint/format checks;
-- fast tests without optional infrastructure;
-- integration and end-to-end tests when their dependencies are available;
-- startup plus health/readiness behavior;
-- migration and seed paths, when present;
-- no remaining consumers of deleted or moved resources;
-- dependency, workspace, path-alias, CI, and deployment references updated after restructuring;
-- regenerated source index matches the final tree and exposes every supported source file;
-- intended-versus-actual architecture differences are resolved or recorded as debt;
-- naming, dependency-direction, complexity, file-budget, and duplication checks match the documented convention profile;
-- large or complex files are split by coherent responsibility, or carry a named, owned exception;
-- no duplicated source of truth exists for contracts, schemas, configuration facts, or domain rules;
-- each non-trivial new symbol has a reuse/placement decision grounded in inspected candidates;
-- shared abstractions have real consumers with one invariant and compatible change cadence;
-- no redundant wrapper, speculative option, pass-through layer, or custom implementation duplicates a suitable existing contract;
-- performance or efficiency claims are supported by workload evidence, profiling, a benchmark, or an explicit complexity argument;
-- internal documentation links;
-- clean working-tree scope containing only intended changes.
-
-Finish with: what was created, chosen boundaries, exact commands run, checks not run and why, and remaining debt. Do not claim “production-ready” without deployment, recovery, security, and operational evidence.
+Finish with created or changed owners, chosen boundaries, exact commands and results, unrun checks,
+and remaining debt. Do not claim production readiness without deployment, recovery, security, and
+operational evidence.

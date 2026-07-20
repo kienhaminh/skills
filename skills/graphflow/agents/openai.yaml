@@ -1,0 +1,6 @@
+interface:
+  display_name: "Graphflow"
+  short_description: "Create, edit, and run persistent work graphs"
+  default_prompt: "Use $graphflow to create, edit, or run a persistent work graph."
+policy:
+  allow_implicit_invocation: false

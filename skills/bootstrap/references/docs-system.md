@@ -29,7 +29,8 @@ Split a file that mixes these needs. Binding rules may link to all four types bu
 | Owner | Contains | Excludes |
 | --- | --- | --- |
 | Root README | Prerequisites, setup, run, common commands | Architecture narrative |
-| Agent entrypoint | Source-tree map, reading order, binding instructions | Duplicated runbook text |
+| `AGENTS.md` | Shared source-tree map, reading order, binding instructions | Duplicated runbook text |
+| `CLAUDE.md` | Claude entrypoint: the shared map plus minimal declared Claude-specific protocol | An independent policy fork |
 | `docs/README.md` | Trust order, index, current/history labels | Full specifications |
 | `docs/architecture/` | Current system, boundaries, data/control flow, decisions | Product backlog |
 | `docs/architecture/decisions/` | Small ADRs: Context, Decision, Status, Consequences | Rewritten or erased history |
@@ -49,6 +50,22 @@ Create only owners the project needs. Use folder-level indexes when a directory 
 
 Model architecture with **C4** zoom levels and an **arc42 Building Block View**. Link components to source directories and public contracts; route file-level lookup through the generated code index rather than duplicating every file in prose.
 
+## Coding-agent entrypoints
+
+Always create root `AGENTS.md` and `CLAUDE.md`. Follow [agent-entrypoints.md](agent-entrypoints.md) as the generation and merge contract. In an inherited repository, complete a missing pair without discarding valid scoped instructions.
+
+Use one compact shared operating map:
+
+- current source tree and boundary ownership;
+- trust order and smallest first-read set;
+- canonical setup, run, test, lint, build, and inspection commands;
+- binding reuse, convention, security, testing, debugging, and cleanup gates;
+- repository-specific safety constraints and links to their authoritative owners.
+
+Read existing entrypoints before setup, but render their final `## Source tree` only after all source and durable docs are stable. Expand `docs/` to show every top-level document owner and routing directory, then copy the reference's canonical core block byte-for-byte. Make shared sections identical by default. If a tool requires distinct protocol, keep the shared map synchronized, isolate the minimal delta under a clearly named section, declare its owner, and add a deterministic drift check. Never maintain two independent descriptions of architecture or commands.
+
+Add nested `AGENTS.md` or `CLAUDE.md` only for real subtree-scoped overrides. State their scope and inheritance explicitly; do not repeat root rules.
+
 ## Writing rules
 
 - Write at the owner's altitude.
@@ -56,5 +73,6 @@ Model architecture with **C4** zoom levels and an **arc42 Building Block View**.
 - Describe implemented state in present tense; label proposals and future work.
 - Prefer commands with expected outcomes over prose instructions.
 - Keep one fact in one owner and link to it elsewhere.
+- Keep both coding-agent entrypoints present and verify their shared content cannot drift silently.
 - Update the index whenever adding or moving a durable doc.
 - Validate relative links after every reorganization.

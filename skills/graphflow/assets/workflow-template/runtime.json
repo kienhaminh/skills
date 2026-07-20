@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "workflow_id": "publish-queue-bulk-retry",
+  "scheduler": {
+    "status": "idle",
+    "pid": null,
+    "updated_at": null,
+    "blocker": null
+  },
+  "authority": {
+    "local_write": false,
+    "commit": false,
+    "push": false,
+    "pull_request": false,
+    "merge": false,
+    "deploy": false,
+    "destructive": false,
+    "network": false,
+    "credentials": false
+  },
+  "authority_grants": {},
+  "delivery": {
+    "schema_version": 1,
+    "required": false,
+    "adapter": "ship-v1",
+    "status": "not_required",
+    "remote": null,
+    "base_branch": null,
+    "head_branch": null,
+    "record": {
+      "mode": "not_applicable",
+      "active_plan": null,
+      "completed_plan": null,
+      "no_plan_reason": null
+    },
+    "commit": null,
+    "pull_request": null,
+    "required_capabilities": [],
+    "grant": null,
+    "manifest": "runtime/delivery/manifest.json",
+    "proof": "runtime/delivery/proof.json",
+    "request_id": null,
+    "failure": null,
+    "updated_at": null
+  },
+  "checkout_guard": {
+    "schema_version": 1,
+    "policy": "primary-checkout-baseline-v1",
+    "status": "uninitialized",
+    "baseline": "runtime/checkout-baseline.json",
+    "current": "runtime/checkout-status.json",
+    "events": "runtime/checkout-events.jsonl",
+    "baseline_digest": null,
+    "request_id": null,
+    "failure": null,
+    "updated_at": null
+  },
+  "decomposition": {
+    "schema_version": 1,
+    "policy": "structural-decomposition-v1",
+    "status": "idle",
+    "reviewer_model": "gpt-5.6-terra",
+    "reviewer_reasoning_effort": "low",
+    "active_node": null,
+    "revision": 0,
+    "last_proof": null,
+    "failure": null,
+    "updated_at": null
+  },
+  "goal_adapter": null
+}

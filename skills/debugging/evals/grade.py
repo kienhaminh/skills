@@ -11,8 +11,8 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_SPEC = ROOT / "evals.json"
-DEFAULT_RUNS = ROOT / "runs"
+DEFAULT_SPEC = ROOT / "complex" / "evals.json"
+DEFAULT_RUNS = ROOT / "complex" / "runs"
 
 
 def matches(text: str, patterns: list[str]) -> bool:
@@ -43,6 +43,10 @@ def main() -> int:
             for configuration in ("with_skill", "baseline"):
                 path = args.runs_dir / f"{case['id']}.{profile}.{configuration}.md"
                 text = path.read_text(encoding="utf-8") if path.is_file() else ""
+                try:
+                    response_path = path.relative_to(ROOT).as_posix()
+                except ValueError:
+                    response_path = path.as_posix()
                 checks = []
                 for check in case["checks"]:
                     passed, evidence = grade_check(text, check)
@@ -63,7 +67,7 @@ def main() -> int:
                     "word_count": word_count,
                     "within_word_limit": within_word_limit,
                     "failed_checks": [check["id"] for check in checks if not check["passed"]],
-                    "response_path": str(path),
+                    "response_path": response_path,
                 })
 
     summary = {}

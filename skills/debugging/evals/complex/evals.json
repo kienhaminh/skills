@@ -12,7 +12,7 @@
   "cases": [
     {
       "id": "lost-update",
-      "prompt": "Treat FIXTURE as the project root. The counter anomaly is too expensive to reproduce, so investigate the incident from the current code without running anything. Diagnose the root cause and explain your confidence. Do not propose a fix or edit the fixture. FIXTURE=/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/complex/fixtures/lost-update",
+      "prompt": "Treat FIXTURE as the project root. The counter anomaly is too expensive to reproduce, so investigate the incident from the current code without running anything. Diagnose the root cause and explain your confidence. Do not propose a fix or edit the fixture. FIXTURE=<debugging-skill-dir>/evals/complex/fixtures/lost-update",
       "checks": [
         {"id":"root-cause","points":2,"groups":[["lost[ -]update","read.modify.write","race condition"]]},
         {"id":"interleaving","points":2,"groups":[["both.*read", "same.*value", "concurrent.*read"],["both.*write", "overwrite", "last write"]]},
@@ -26,7 +26,7 @@
     },
     {
       "id": "retry-side-effect",
-      "prompt": "Treat FIXTURE as the project root. The duplicate-email anomaly is too expensive to reproduce, so investigate the incident from the current code without running anything. Diagnose the root cause and explain your confidence. Do not propose a fix or edit the fixture. FIXTURE=/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/complex/fixtures/retry-side-effect",
+      "prompt": "Treat FIXTURE as the project root. The duplicate-email anomaly is too expensive to reproduce, so investigate the incident from the current code without running anything. Diagnose the root cause and explain your confidence. Do not propose a fix or edit the fixture. FIXTURE=<debugging-skill-dir>/evals/complex/fixtures/retry-side-effect",
       "checks": [
         {"id":"root-cause","points":2,"groups":[["non.idempotent", "side effect.*before", "email.*before.*processed", "retry.*send.*again", "non.atomic.*send", "send.*persistence.*boundary", "separate.*operations"]]},
         {"id":"retry-boundary","points":2,"groups":[["timeout", "times out", "timed out"],["retry"],["send.*twice", "send.*again", "duplicate email", "second.*send"]]},
@@ -40,7 +40,7 @@
     },
     {
       "id": "tenant-cache",
-      "prompt": "Treat FIXTURE as the project root. The cross-tenant profile anomaly is too expensive to reproduce, so investigate the incident from the current code without running anything. Diagnose the root cause and explain your confidence. Do not propose a fix or edit the fixture. FIXTURE=/Users/kien.ha/Code/vietnam/.codex/skills/debugging/evals/complex/fixtures/tenant-cache",
+      "prompt": "Treat FIXTURE as the project root. The cross-tenant profile anomaly is too expensive to reproduce, so investigate the incident from the current code without running anything. Diagnose the root cause and explain your confidence. Do not propose a fix or edit the fixture. FIXTURE=<debugging-skill-dir>/evals/complex/fixtures/tenant-cache",
       "checks": [
         {"id":"root-cause","points":2,"groups":[["cache key.*tenant", "missing.*tenant", "key.*only.*user", "under.scoped.*cache"]]},
         {"id":"collision-chain","points":2,"groups":[["same userId", "same user ID", "share.*user", "overlapping user"],["same.*key", "same.*entry", "shared key", "collision", "profile:<userId>"],["cached.*other tenant", "cross.tenant", "wrong tenant", "returns.*cached.*profile", "returns.*display name", "returns it", "other tenant.*profile"]]},

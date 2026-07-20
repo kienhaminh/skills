@@ -1,5 +1,0 @@
-The duplicate is caused by a retry boundary that sits after a non-transactional side effect. `NotificationWorker.handle()` sends the email first and only then records the job in `processed`. When the database call times out after the mail provider has accepted the first send, the handler fails from the queue's perspective even though the recipient has already received the message. The queue retries the same job, which sends the email again; that later attempt can successfully insert the single processed-job row and be reported as completed.
-
-The evidence is strongly consistent with this sequence: the incident explicitly records a successful send followed by a database timeout, and the code has no earlier durable completion check or state that would distinguish a retried job from a first attempt. Exactly one processed-job row is expected because the first post-send insert did not complete, while the retry's insert did.
-
-Confidence: high. The reported ordering matches the only side-effect ordering in the current worker, and the configured retries explain why the failed attempt was executed again.

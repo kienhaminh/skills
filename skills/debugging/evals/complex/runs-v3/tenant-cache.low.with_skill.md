@@ -1,5 +1,0 @@
-Diagnosis — high confidence (code-derived; no runtime reproduction): `ProfileService` scopes repository reads by both `tenantId` and `userId`, but scopes its shared cache key only by `userId`. The tenant-isolation invariant is therefore broken at the cache boundary: a request for tenant A caches `profile:<userId>`; a later request for tenant B with the same user ID, on the same long-lived process, returns A's cached `Profile` before reaching the repository. That directly explains both the cross-tenant display name and why database traces remain correctly tenant-scoped.
-
-The strongest alternative is a repository query missing tenant filtering, but the interface call passes both values and the incident states that every observed database query includes both, which does not account for a cache hit bypassing the database.
-
-Remaining uncertainty is operational: confirmation would require cache-key/hit telemetry showing a value written under one tenant and served to another for the same user ID. It does not materially weaken the source-level causal chain.

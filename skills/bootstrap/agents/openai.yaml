@@ -1,4 +1,4 @@
 interface:
   display_name: "Bootstrap"
   short_description: "Build simple, reusable, agent-readable codebases"
-  default_prompt: "Use $bootstrap to map, reuse before building, define conventions for, clean, or restructure this repository from live source evidence."
+  default_prompt: "Use $bootstrap to map this repository from live evidence, merge canonical AGENTS.md and CLAUDE.md guides with a current source tree, reuse before building, enforce conventions, and restructure safely."

@@ -1,6 +1,6 @@
 ---
 name: sync-docs
-description: Reconcile the repo's durable business docs (mainly docs/design/domain.md) with what the code actually does, and fold a finished plan's lasting behaviour back into them so the next session inherits it. Use when the user asks to "sync docs", "đồng bộ tài liệu", "cập nhật tài liệu với code", fold a completed plan into the docs, or check whether the business docs still match the code — and proactively right after finishing a plan or a behaviour-changing task, when the durable change is freshest and easiest to lose.
+description: Reconcile durable business docs, especially docs/design/domain.md, with implemented behaviour. Use for sync-docs requests, code-vs-doc audits, completed-plan folding, or immediately after a behaviour-changing task. Update descriptive drift from code evidence; flag documented invariant contradictions instead of rewriting them.
 ---
 
 # Sync durable docs with the code
@@ -13,10 +13,8 @@ that lasting behaviour and nobody records it, the knowledge dies in a commit dif
 `domain.md` honest against the code and harvests lasting decisions before they vanish. It is the
 executor of the principle `to-stories` only notes — "feed durable behaviour back to domain.md".
 
-Because `domain.md` is read as truth by every later session, a wrong edit poisons all of them. So
-the whole skill turns on one distinction (below), and the nuances live in
-[`references/reconciliation.md`](references/reconciliation.md) — read it whenever a discrepancy is
-non-trivial or you're unsure how to phrase an edit.
+Because `domain.md` is read as truth by every later session, a wrong edit poisons all of them. The
+descriptive-versus-invariant distinction below is therefore mandatory.
 
 ## Read → analyse → compare → *then* write
 
@@ -64,16 +62,13 @@ When unsure which kind a change is, treat it as an invariant and ask.
 
 ## Where it goes
 
-Default: extend `domain.md` in place. The repo was recently reorganised and discourages new loose
-docs, so **don't scaffold empty files**. Keep the writing at business altitude — no file paths or
-table names (those drift and belong in `architecture/`) — and leave a short provenance trace (plan
-slug + date), matching `domain.md`'s existing convention. When and why to propose a *new* durable
-doc is covered in [`references/reconciliation.md`](references/reconciliation.md).
+Default: extend `domain.md` in place. Do not scaffold empty files. Keep the writing at business
+altitude — no file paths or table names — and leave a short provenance trace (plan slug + date),
+matching `domain.md`'s existing convention. Propose a new durable doc only when the existing owner
+cannot hold the concept cleanly.
 
 ## Output
 
-Edit the doc(s), then give the user a short summary: what you **folded**, what you **flagged** for
-their decision (invariant contradictions — not written), and what you **checked and found still
-accurate**. "Docs match the code, nothing to fold" is a valid, useful result — don't invent edits.
-The summary template and the finish checklist are in
-[`references/reconciliation.md`](references/reconciliation.md).
+Edit the doc(s), then summarize what you **folded**, what you **flagged** for a decision, and what
+you **checked and found still accurate**. "Docs match the code, nothing to fold" is a valid result;
+do not invent edits.

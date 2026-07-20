@@ -49,6 +49,12 @@ DOC_OWNERS = {
 MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 LEGACY_NAME = re.compile(r"(^|[._-])(legacy|deprecated|obsolete|backup|bak|old|archive)([._-]|$)", re.IGNORECASE)
 TRANSIENT_SUFFIXES = {".bak", ".orig", ".rej", ".tmp"}
+CORE_START = "<!-- bootstrap:core:start -->"
+CORE_END = "<!-- bootstrap:core:end -->"
+SOURCE_TREE = re.compile(
+    r"^## Source tree\s*$.*?^```(?:text)?\s*$\n(?P<body>.*?)^```\s*$",
+    re.IGNORECASE | re.MULTILINE | re.DOTALL,
+)
 
 
 def walk(root: Path):
@@ -110,6 +116,66 @@ def cleanup_signals(root: Path, lockfiles: list[str]) -> dict[str, list[str]]:
     }
 
 
+def canonical_agent_core() -> str | None:
+    reference = Path(__file__).resolve().parent.parent / "references" / "agent-entrypoints.md"
+    try:
+        text = reference.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    start = text.find(CORE_START)
+    end = text.find(CORE_END, start)
+    if start < 0 or end < 0:
+        return None
+    return text[start:end + len(CORE_END)]
+
+
+def source_tree_covers_docs(root: Path, body: str | None) -> bool:
+    docs = root / "docs"
+    if not docs.is_dir():
+        return True
+    if not body or "docs/" not in body:
+        return False
+    owners = sorted(path.name for path in docs.iterdir() if path.is_file() and path.suffix.lower() == ".md")
+    routers = sorted(f"{path.name}/" for path in docs.iterdir() if path.is_dir() and path.name not in IGNORED)
+    return all(name in body for name in owners + routers)
+
+
+def agent_entrypoints(root: Path) -> dict[str, Any]:
+    paths = {name: root / name for name in ("AGENTS.md", "CLAUDE.md")}
+    present = {name: path.is_file() for name, path in paths.items()}
+    texts: dict[str, str | None] = {}
+    for name, path in paths.items():
+        try:
+            texts[name] = path.read_text(encoding="utf-8") if present[name] else None
+        except (OSError, UnicodeDecodeError):
+            texts[name] = None
+    if not all(present.values()):
+        sync = "incomplete"
+    elif any(text is None for text in texts.values()):
+        sync = "unreadable"
+    else:
+        sync = "identical" if texts["AGENTS.md"] == texts["CLAUDE.md"] else "different"
+    core = canonical_agent_core()
+    tree_bodies = {
+        name: match.group("body").strip() if text and (match := SOURCE_TREE.search(text)) else None
+        for name, text in texts.items()
+    }
+    return {
+        **present,
+        "sync": sync,
+        "source_tree": {
+            name: bool(body) for name, body in tree_bodies.items()
+        },
+        "docs_coverage": {
+            name: source_tree_covers_docs(root, body) for name, body in tree_bodies.items()
+        },
+        "canonical_core": {
+            name: bool(text and core and core in text)
+            for name, text in texts.items()
+        },
+    }
+
+
 def inspect(root: Path) -> dict[str, Any]:
     manifests = rels(root, lambda path: path.is_file() and path.name in MANIFESTS)
     stacks = sorted({MANIFESTS[Path(path).name] for path in manifests})
@@ -118,6 +184,7 @@ def inspect(root: Path) -> dict[str, Any]:
     command_names = ("dev", "build", "type-check", "typecheck", "lint", "format", "test", "test:int", "test:e2e")
     commands = {name: scripts[name] for name in command_names if name in scripts}
     docs = {name: any((root / candidate).exists() for candidate in candidates) for name, candidates in DOC_OWNERS.items()}
+    docs["agent_entrypoint"] = all((root / candidate).is_file() for candidate in DOC_OWNERS["agent_entrypoint"])
     return {
         "root": str(root),
         "stacks": stacks,
@@ -130,6 +197,7 @@ def inspect(root: Path) -> dict[str, Any]:
         "ci": rels(root, lambda path: path.is_file() and (".github/workflows" in str(path.relative_to(root)) or path.name in {".gitlab-ci.yml", "Jenkinsfile"})),
         "tests": rels(root, lambda path: path.is_file() and ("test" in path.name.lower() or "spec" in path.name.lower())),
         "docs": docs,
+        "agent_entrypoints": agent_entrypoints(root),
         "cleanup_signals": cleanup_signals(root, lockfiles),
         "broken_markdown_links": broken_links(root),
     }
@@ -145,6 +213,21 @@ def markdown(report: dict[str, Any]) -> str:
     lines.extend([f"- `{name}`: `{command}`" for name, command in report["commands"].items()] or ["- none detected"])
     lines.extend(["", "## Documentation owners", ""])
     lines.extend(f"- {name}: {'present' if present else 'missing'}" for name, present in report["docs"].items())
+    lines.extend(["", "## Coding-agent entrypoints", ""])
+    lines.extend(f"- `{name}`: {'present' if report['agent_entrypoints'][name] else 'missing'}" for name in ("AGENTS.md", "CLAUDE.md"))
+    lines.append(f"- shared-content status: {report['agent_entrypoints']['sync']}")
+    lines.extend(
+        f"- `{name}` source tree: {'present' if report['agent_entrypoints']['source_tree'][name] else 'missing'}"
+        for name in ("AGENTS.md", "CLAUDE.md")
+    )
+    lines.extend(
+        f"- `{name}` docs coverage: {'complete' if report['agent_entrypoints']['docs_coverage'][name] else 'incomplete'}"
+        for name in ("AGENTS.md", "CLAUDE.md")
+    )
+    lines.extend(
+        f"- `{name}` canonical core: {'exact' if report['agent_entrypoints']['canonical_core'][name] else 'missing or modified'}"
+        for name in ("AGENTS.md", "CLAUDE.md")
+    )
     lines.extend(["", "## Broken Markdown links", ""])
     lines.extend(
         [f"- `{item['document']}` -> `{item['target']}`" for item in report["broken_markdown_links"]]

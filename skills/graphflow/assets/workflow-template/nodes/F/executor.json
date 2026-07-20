@@ -1,0 +1,20 @@
+{
+  "schema_version": 2,
+  "node_id": "F",
+  "type": "agent",
+  "workspace": {"mode": "verifier", "ref": "workspace-f", "subdir": "."},
+  "timeout_seconds": 1800,
+  "idempotency_key": "verify-publish-bulk-retry-v1",
+  "result_schema": "nodes/node-result.schema.json",
+  "acceptance_checks": ["CHK-R5-FALSIFICATION"],
+  "env_allow": [],
+  "requires_authority": [],
+  "resources": [
+    {"path": "nodes/node-result.schema.json", "digest": "sha256:9ff27ce7cfd16cc2ebc75d24c1d87a66b16fc7460a6cebef728fe428ca4edff0"},
+    {"path": "nodes/F/prompt.md", "digest": "sha256:d152fd4102002af491c5674071796350c39ac9faf39a22173e904a971ab8539f"}
+  ],
+  "prompt": "nodes/F/prompt.md",
+  "model": "gpt-5.6-sol",
+  "reasoning_effort": "high",
+  "sandbox": "read-only"
+}

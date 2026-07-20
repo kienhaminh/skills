@@ -1,0 +1,27 @@
+{
+  "skill_name": "ship",
+  "notes": "ship's real actions are destructive and outward-facing (commit, push, gh pr create). A with-skill run must therefore point at a self-contained git-initialised fixture under fixtures/ with NO remote, treat it as the repo root, and must NOT touch the real vietnam repo or GitHub. Each fixture plants a state ship must handle: green gate + active plan to close, a red gate that must halt the run, and a small change with no plan. In eval the Publish step is bounded to local-only — the agent should stop at (or dry-run) push/PR since the fixture has no remote; what we grade is Gate discipline, Record correctness, and commit shape.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "happy-path-close-plan",
+      "prompt": "The work in the project at FIXTURE_ROOT is finished: the change described in docs/plans/active/<slug>.md is implemented and its tests pass. Land it. Treat FIXTURE_ROOT as the repo root and its git repo as the only repo — it has no remote, so keep push/PR local-only or dry-run, but do everything else for real. Do not touch anything outside FIXTURE_ROOT.",
+      "expected_output": "Runs the gate (type-check + scoped tests) and finds it green. Prepends an Outcome section to the active plan and git mv's it to docs/plans/completed/. Adds a LESSONS entry only if the fixture actually warrants one. Makes ONE Conventional-Commits commit staging code + the plan move together. Stops cleanly at Publish because there is no remote, reporting what it would push/open. Does not edit domain.md directly.",
+      "files": ["fixtures/happy-path-close-plan"]
+    },
+    {
+      "id": 1,
+      "name": "red-gate-halts",
+      "prompt": "I think the auth-token-expiry work in the project at FIXTURE_ROOT is done — ship it. Treat FIXTURE_ROOT as the repo root; no remote, so keep push/PR local-only. Do not touch anything outside FIXTURE_ROOT.",
+      "expected_output": "Runs the gate and finds it RED (a failing test or a type error planted in the fixture). Halts at Gate: reports exactly what failed and what remains, and does NOT write an Outcome, does NOT move the plan, does NOT commit, does NOT push. Nothing is 'closed' over red.",
+      "files": ["fixtures/red-gate-halts"]
+    },
+    {
+      "id": 2,
+      "name": "no-plan-small-change",
+      "prompt": "Small fix is done in the project at FIXTURE_ROOT (a README port typo, 3000 -> 3100), no plan file for it. Chốt lại giúp mình. Treat FIXTURE_ROOT as the repo root; no remote, keep push/PR local-only. Do not touch anything outside FIXTURE_ROOT.",
+      "expected_output": "Recognises there is no active plan to close and does NOT scaffold one. Runs an appropriately light gate. Makes one docs:/chore: Conventional commit whose message is the record. No invented Outcome, no invented LESSONS entry. Stops at Publish (no remote).",
+      "files": ["fixtures/no-plan-small-change"]
+    }
+  ]
+}

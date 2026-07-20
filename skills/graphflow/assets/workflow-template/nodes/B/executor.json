@@ -1,0 +1,20 @@
+{
+  "schema_version": 2,
+  "node_id": "B",
+  "type": "agent",
+  "workspace": {"mode": "worktree", "ref": "workspace-b", "subdir": "."},
+  "timeout_seconds": 1800,
+  "idempotency_key": "contract-publish-bulk-retry-v1",
+  "result_schema": "nodes/node-result.schema.json",
+  "acceptance_checks": ["CHK-R1-CONTRACT"],
+  "env_allow": [],
+  "requires_authority": ["local_write"],
+  "resources": [
+    {"path": "nodes/node-result.schema.json", "digest": "sha256:9ff27ce7cfd16cc2ebc75d24c1d87a66b16fc7460a6cebef728fe428ca4edff0"},
+    {"path": "nodes/B/prompt.md", "digest": "sha256:1562371c0551a363a54040536966d7ae25680f3e9bd2389ba207e41f25d1567b"}
+  ],
+  "prompt": "nodes/B/prompt.md",
+  "model": "gpt-5.6-terra",
+  "reasoning_effort": "medium",
+  "sandbox": "workspace-write"
+}

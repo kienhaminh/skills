@@ -1,4 +1,0 @@
-interface:
-  display_name: "Workflow"
-  short_description: "Run guarded, evidence-calibrated work graphs"
-  default_prompt: "Use $workflow to lock intent, run a named-method graph with selective shared memory by workflow_id, falsify required claims, and report calibrated evidence."
