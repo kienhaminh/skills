@@ -1,5 +1,5 @@
 ---
-name: to-stories
+name: stories
 description: Convert a plan into an epic and behaviour-sliced user stories with acceptance criteria under docs/plans/stories/. Use when the user asks for user stories, backlog items, tickets, an epic, or a breakdown of work implied by a plan. Ground stories in docs/design/domain.md and flag conflicts with established business rules.
 ---
 
@@ -105,5 +105,5 @@ Read the generated file back and confirm:
 - the plan is untouched and no unsupported repository detail was invented.
 
 Report the output path and only the judgement calls the user should review: merged or split steps,
-inferred unhappy paths, unresolved questions, and domain conflicts. Invoke `$to-tdd` only when the
+inferred unhappy paths, unresolved questions, and domain conflicts. Invoke `$tdd` only when the
 user asks to turn a selected story into failing tests.

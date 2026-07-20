@@ -1,6 +1,6 @@
 ---
-name: to-tdd
-description: Turn one user story into an exhaustive test list and meaningful failing tests, without production implementation. Use for TDD, tests-first, test-case enumeration, or requests to convert a story into tests. Consume stories from $to-stories when available and hand red tests to $implement.
+name: tdd
+description: Turn one user story into an exhaustive test list and meaningful failing tests, without production implementation. Use for TDD, tests-first, test-case enumeration, or requests to convert a story into tests. Consume stories from $stories when available and hand red tests to $implement.
 ---
 
 # User story to failing tests
@@ -14,7 +14,7 @@ Use a pasted story or one story from `docs/plans/stories/<slug>.md`. Identify it
 acceptance criteria, constraints, and open questions. If several stories are possible and the request
 does not select one, ask which to use.
 
-If acceptance criteria are absent, stop and invoke `$to-stories` when the user wants them derived.
+If acceptance criteria are absent, stop and invoke `$stories` when the user wants them derived.
 Do not invent tests against an unagreed target.
 
 ## Enumerate before writing

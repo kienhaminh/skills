@@ -11,7 +11,7 @@ outlives them is the code and the durable business description in
 a fresh session to learn *what this system does and the rules it must obey*. When a task changes
 that lasting behaviour and nobody records it, the knowledge dies in a commit diff. This skill keeps
 `domain.md` honest against the code and harvests lasting decisions before they vanish. It is the
-executor of the principle `to-stories` only notes — "feed durable behaviour back to domain.md".
+executor of the principle `stories` only notes — "feed durable behaviour back to domain.md".
 
 Because `domain.md` is read as truth by every later session, a wrong edit poisons all of them. The
 descriptive-versus-invariant distinction below is therefore mandatory.

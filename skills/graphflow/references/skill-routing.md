@@ -10,8 +10,8 @@ Ordered `skills` must equal the mapped non-empty values from ordered `operations
 | --- | --- | --- |
 | `problem-framing` | `brainstorming` | Fuzzy, multi-variable root question |
 | `feature-plan` | `grill-me` | Concrete product/feature requirements |
-| `story-slicing` | `to-stories` | Vertical observable slices |
-| `test-design` | `to-tdd` | Executable behavior/test plan |
+| `story-slicing` | `stories` | Vertical observable slices |
+| `test-design` | `tdd` | Executable behavior/test plan |
 | `implementation` | `implement` | Authorized code change and focused checks |
 | `diagnosis` | `debugging` | Evidence-first diagnosis; no fix unless separately authorized |
 | `docs-sync` | `sync-docs` | Canonical documentation reconciliation |
@@ -22,7 +22,7 @@ Ordered `skills` must equal the mapped non-empty values from ordered `operations
 Examples:
 
 ```json
-{"operations":["test-design","implementation"],"skills":["to-tdd","implement"]}
+{"operations":["test-design","implementation"],"skills":["tdd","implement"]}
 {"operations":["integration","implementation"],"skills":["implement"]}
 {"operations":["verification"],"skills":[]}
 ```

@@ -30,8 +30,8 @@ The installer lets you select supported agents, including Codex. Set `DISABLE_TE
 | [grill-me](./skills/grill-me/SKILL.md) | Turns a vague feature request into grounded alternatives, risks, and an implementation write-up before code is changed. | Project-adapted; uses the target repository's planning and domain-doc conventions. |
 | [implement](./skills/implement/SKILL.md) | Converts an agreed story, plan, or red test into the smallest proven production change. | Currently adapted to the Vietnam monorepo. |
 | [sync-docs](./skills/sync-docs/SKILL.md) | Reconciles durable business documentation with implemented behaviour after a completed change. | Project-adapted; expects `docs/design/domain.md`. |
-| [to-stories](./skills/to-stories/SKILL.md) | Slices a plan into an epic and behaviour-focused user stories with acceptance criteria. | Project-adapted; expects the `docs/plans/` and domain-doc layout. |
-| [to-tdd](./skills/to-tdd/SKILL.md) | Converts a user story into meaningful failing tests and stops before production implementation. | Project-adapted; follows `to-stories`. |
+| [stories](./skills/stories/SKILL.md) | Slices a plan into an epic and behaviour-focused user stories with acceptance criteria. | Project-adapted; expects the `docs/plans/` and domain-doc layout. |
+| [tdd](./skills/tdd/SKILL.md) | Converts a user story into meaningful failing tests and stops before production implementation. | Project-adapted; follows `stories`. |
 | [workflow](./skills/workflow/SKILL.md) | Creates or runs a persistent, provider-neutral work graph with explicit authority, evidence, recovery, and integration. | General workflow infrastructure; needs an explicit `workflow_id`. |
 | [worktree](./skills/worktree/SKILL.md) | Coordinates parallel Git worktrees while isolating ports, databases, containers, caches, logs, and ownership. | Broadly reusable; adapt the repository-specific doc references before use elsewhere. |
 

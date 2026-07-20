@@ -30,8 +30,8 @@ OPERATION_SKILLS = {
     "integration": None,
     "problem-framing": "brainstorming",
     "prototyping": None,
-    "story-slicing": "to-stories",
-    "test-design": "to-tdd",
+    "story-slicing": "stories",
+    "test-design": "tdd",
     "verification": None,
     "worktree-management": "worktree",
 }

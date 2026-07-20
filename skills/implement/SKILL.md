@@ -1,6 +1,6 @@
 ---
 name: implement
-description: Implement an agreed story, plan, or failing-test target in the Vietnam monorepo and prove the resulting behaviour. Use for requests to implement, write code, build a feature, or make red tests pass. Not for diagnosis-only work (use $debugging), tests-first design (use $to-tdd), or story slicing (use $to-stories).
+description: Implement an agreed story, plan, or failing-test target in the Vietnam monorepo and prove the resulting behaviour. Use for requests to implement, write code, build a feature, or make red tests pass. Not for diagnosis-only work (use $debugging), tests-first design (use $tdd), or story slicing (use $stories).
 ---
 
 # Implement

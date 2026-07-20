@@ -263,7 +263,7 @@
       "isolation": "worktree",
       "parent": "A",
       "depends_on": ["B"],
-      "skills": ["to-tdd", "implement"],
+      "skills": ["tdd", "implement"],
       "covers": ["R2"],
       "scope": {
         "read": ["packages/contracts/src/publish-retry.ts", "apps/server/src/publish"],
