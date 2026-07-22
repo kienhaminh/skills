@@ -413,7 +413,7 @@ def provision_entry(workflow_dir: Path, repo_root: Path, ref: str) -> dict[str, 
             git(repo_root, "worktree", "add", "--detach", str(path), source_sha)
             expected_branch = "(detached)"
         else:
-            expected_branch = f"codex/{workflow_slug}-{node_slug}"
+            expected_branch = f"graphflow/{workflow_slug}-{node_slug}"
             if git(repo_root, "show-ref", "--verify", f"refs/heads/{expected_branch}", check=False).strip():
                 raise ValueError(f"workspace branch already exists: {expected_branch}")
             git(repo_root, "worktree", "add", "-b", expected_branch, str(path), source_sha)

@@ -6,8 +6,8 @@ Use this reference only for a hard budget, user-requested options, or material r
 
 Run one low-cost agent to inspect machine/repo capabilities. Persist:
 
-- global sanitized profile: `~/.codex/graphflow-profiles/machine.json`;
-- repo overlay: `.codex/graphflow-profile.json`.
+- global sanitized profile: `~/.graphflow/profiles/machine.json`;
+- repo overlay: `.graphflow/profile.json`.
 
 Use `python3 <skill-dir>/scripts/profile_environment.py --repo <repo> --global-output <path> --repo-output <path>`. Refresh only when stale or environment drift matters.
 

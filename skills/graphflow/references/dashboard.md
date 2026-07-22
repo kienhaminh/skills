@@ -9,9 +9,9 @@ workflow that lacks one, copy the bundled contents into the destination without 
 `dashboard` directory:
 
 ```bash
-mkdir -p .codex/workflows/<id>/dashboard
-cp -R <skill-dir>/assets/workflow-template/dashboard/. .codex/workflows/<id>/dashboard/
-python3 <skill-dir>/scripts/serve_dashboard.py serve .codex/workflows/<id> --port 8765 --max-port 8799
+mkdir -p .graphflow/workflows/<id>/dashboard
+cp -R <skill-dir>/assets/workflow-template/dashboard/. .graphflow/workflows/<id>/dashboard/
+python3 <skill-dir>/scripts/serve_dashboard.py serve .graphflow/workflows/<id> --port 8765 --max-port 8799
 ```
 
 Record PID/port in `runtime.json`. Verify HTTP 200 for `/dashboard/`, `/graph.json`, `/runtime.json`, and `/memory/state.json`. Stop with `python3 <skill-dir>/scripts/serve_dashboard.py stop <workflow-dir>`; never use a broad kill command.
@@ -21,7 +21,7 @@ Record PID/port in `runtime.json`. Verify HTTP 200 for `/dashboard/`, `/graph.js
 The bundled static dashboard:
 
 - fetches graph, runtime, sanitized requests/progress/workspaces/primary-checkout state, and shared-memory projections; polls while visible and refreshes on `visibilitychange`;
-- renders lifecycle, Goal-independent scheduler state, structural-decomposition status/revision, Ship delivery status/branch, primary-checkout guard, trust phase/workspace/branch/HEAD, executor type/spec, question/intent/integrity/evidence gates, sanitized confirmation queue, memory revision/pivotal entries, coverage, frontier, dependencies, methods, scopes, budgets, and runtime summaries;
+- renders lifecycle, caller-independent scheduler state, structural-decomposition status/revision, Ship delivery status/branch, primary-checkout guard, trust phase/workspace/branch/HEAD, executor type/spec, question/intent/integrity/evidence gates, sanitized confirmation queue, memory revision/pivotal entries, coverage, frontier, dependencies, methods, scopes, budgets, and runtime summaries;
 - uses DOM `textContent`, no HTML injection, remote scripts, CDN, analytics, credentials, or write controls;
 - tolerates a transient invalid/partial read and shows last refresh/error state.
 

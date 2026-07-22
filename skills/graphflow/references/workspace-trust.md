@@ -15,7 +15,7 @@ Never put credentials, environment values, or process arguments in the registry 
 Apply [Primary checkout guard](checkout-guard.md): snapshot the coordinator checkout before dispatch and fail closed on any later change. Declared write ownership applies inside the registered worktree only; it never makes a primary-checkout mutation trusted.
 Changed symlinks fail closed because a path-level scope cannot prove their eventual write target; supporting them requires a future explicit contract extension rather than an agent exception.
 
-A worktree is not an OS sandbox. Treat a `command` executor as trusted, digest-locked coordinator code; audit every argv/resource and grant network/credentials separately. Run untrusted or high-risk tools inside an explicitly authorized container/sandbox with scoped mounts. Agent executors still use the declared Codex sandbox, and post-run scope verification remains mandatory.
+A worktree is not an OS sandbox. Treat a `command` executor as trusted, digest-locked coordinator code; audit every argv/resource and grant network/credentials separately. Run untrusted or high-risk tools inside an explicitly authorized container/sandbox with scoped mounts. An agent adapter must prove it can enforce the declared sandbox mode; post-run scope verification remains mandatory and never substitutes for isolation.
 
 ## Two-phase handoff
 

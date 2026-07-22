@@ -52,41 +52,60 @@ class DecompositionBrokerTests(unittest.TestCase):
         graph_path.write_text(json.dumps(graph, indent=2) + "\n", encoding="utf-8")
         approve_template_for_execution(self.workflow, self.repo)
         BROKER.memory_state.command_init(self.workflow, self.repo)
-        self.fake_codex = self.workflow / "runtime" / "fake-reviewer.py"
-        self.fake_codex.parent.mkdir(parents=True, exist_ok=True)
-        self.fake_codex.write_text(
+        self.fake_reviewer = self.workflow / "runtime" / "fake-reviewer.py"
+        self.fake_reviewer.parent.mkdir(parents=True, exist_ok=True)
+        self.fake_reviewer.write_text(
             "#!/usr/bin/env python3\n"
             "import json,re,sys\n"
-            "from pathlib import Path\n"
-            "args=sys.argv\n"
-            "assert '--ask-for-approval' not in args\n"
-            "assert 'approval_policy=\"never\"' in args\n"
-            "out=Path(args[args.index('--output-last-message')+1])\n"
-            "prompt=sys.stdin.read()\n"
+            "request=json.load(sys.stdin); prompt=request['prompt']\n"
+            "assert request['kind']=='review' and request['sandbox']=='read-only'\n"
             "def field(name):\n"
             "  m=re.search(name+r\"='([^']+)'\",prompt); return m.group(1)\n"
             "review={'schema_version':1,'workflow_id':field('workflow_id'),'graph_digest':field('graph_digest'),'methods':['Rumsfeld Matrix','Value of Information','Reversibility','Premortem'],'reviewer':{'agent_id':field('reviewer.agent_id'),'model_class':'small','model_id':'fake-small','independent':True,'context_policy':'fresh-artifacts-only'},'challenges':[{'class':'misread-intent','result':'clear','rationale':'Objective and acceptance are unchanged.'},{'class':'hidden-dependency','result':'clear','rationale':'Every support child is ancestral to the terminal child.'},{'class':'oracle-gap','result':'clear','rationale':'Existing locked checks are preserved.'}],'findings':[],'status':'passed','reviewed_at':'2026-07-20T00:00:00Z'}\n"
-            "out.parent.mkdir(parents=True,exist_ok=True); out.write_text(json.dumps(review))\n",
+            "json.dump(review,sys.stdout)\n",
             encoding="utf-8",
         )
-        self.fake_codex.chmod(0o700)
+        self.fake_reviewer.chmod(0o700)
+        runtime_path = self.workflow / "runtime.json"
+        runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        runtime["agent_adapter"] = {
+            "schema_version": 1,
+            "protocol": "graphflow-agent-adapter-v1",
+            "id": "alternate-review-test-v1",
+            "argv": ["python3", "runtime/fake-reviewer.py"],
+            "env_allow": [],
+            "resources": [{"path": "runtime/fake-reviewer.py", "digest": BROKER.sha256(self.fake_reviewer)}],
+            "sandbox_modes": ["read-only", "workspace-write"],
+            "model_map": {"small": "fake-small", "balanced": "fake-balanced", "frontier": "fake-frontier"},
+            "requires_authority": [],
+        }
+        runtime_path.write_text(json.dumps(runtime, indent=2) + "\n", encoding="utf-8")
         self.open_reviewer = self.workflow / "runtime" / "fake-open-reviewer.py"
         self.open_reviewer.write_text(
             "#!/usr/bin/env python3\n"
             "import json,re,sys\n"
-            "from pathlib import Path\n"
-            "args=sys.argv; out=Path(args[args.index('--output-last-message')+1]); prompt=sys.stdin.read()\n"
+            "request=json.load(sys.stdin); prompt=request['prompt']\n"
             "def field(name):\n"
             "  m=re.search(name+r\"='([^']+)'\",prompt); return m.group(1)\n"
             "finding={'id':'intent-1','question':'Should terminal acceptance preserve the current retry semantics or adopt the newly implied partial-success semantics?','impacts':['acceptance'],'disposition':'pivotal_open','rationale':'The proposal text permits two incompatible acceptance meanings.','evidence':[]}\n"
             "review={'schema_version':1,'workflow_id':field('workflow_id'),'graph_digest':field('graph_digest'),'methods':['Rumsfeld Matrix','Value of Information','Reversibility','Premortem'],'reviewer':{'agent_id':field('reviewer.agent_id'),'model_class':'small','model_id':'fake-small','independent':True,'context_policy':'fresh-artifacts-only'},'challenges':[{'class':'misread-intent','result':'finding','rationale':'Acceptance meaning is ambiguous.'},{'class':'hidden-dependency','result':'clear','rationale':'Dependency ancestry is closed.'},{'class':'oracle-gap','result':'clear','rationale':'Locked check IDs are preserved.'}],'findings':[finding],'status':'open','reviewed_at':'2026-07-20T00:00:00Z'}\n"
-            "out.parent.mkdir(parents=True,exist_ok=True); out.write_text(json.dumps(review))\n",
+            "json.dump(review,sys.stdout)\n",
             encoding="utf-8",
         )
         self.open_reviewer.chmod(0o700)
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
+
+    def select_reviewer(self, path: Path, adapter_id: str) -> None:
+        runtime_path = self.workflow / "runtime.json"
+        runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        runtime["agent_adapter"].update(
+            id=adapter_id,
+            argv=["python3", f"runtime/{path.name}"],
+            resources=[{"path": f"runtime/{path.name}", "digest": BROKER.sha256(path)}],
+        )
+        runtime_path.write_text(json.dumps(runtime, indent=2) + "\n", encoding="utf-8")
 
     def proposal(self) -> dict[str, object]:
         original_output = {
@@ -173,7 +192,7 @@ class DecompositionBrokerTests(unittest.TestCase):
         result_path.parent.mkdir(parents=True, exist_ok=True)
         result_path.write_text(json.dumps(self.result(self.proposal()), indent=2) + "\n", encoding="utf-8")
         outcome = RUNTIME.consume_result(
-            self.workflow, self.repo, self.workflow / "graph.json", "B", str(self.fake_codex),
+            self.workflow, self.repo, self.workflow / "graph.json", "B",
         )
         after = json.loads((self.workflow / "graph.json").read_text(encoding="utf-8"))
         parent = next(node for node in after["nodes"] if node["id"] == "B")
@@ -219,7 +238,7 @@ class DecompositionBrokerTests(unittest.TestCase):
             BROKER.validate_proposal(graph, node, spec, proposal, plan)
 
     def test_recursive_split_must_continue_inherited_ranking_bound(self) -> None:
-        outcome = BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()), str(self.fake_codex))
+        outcome = BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()))
         graph, node, spec, _ = BROKER.load_executor(self.workflow, "B.materialize")
         self.assertEqual(node["decomposition_bound"]["policy"], "ranking-function-v1")
         self.assertEqual(node["decomposition_bound"]["name"], "contract-points")
@@ -238,7 +257,7 @@ class DecompositionBrokerTests(unittest.TestCase):
         self.assertIn("decompose result must leave memory_delta and request null", errors)
 
     def test_committed_journal_rolls_forward_runtime_after_crash(self) -> None:
-        outcome = BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()), str(self.fake_codex))
+        outcome = BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()))
         journal_path = self.workflow / "runtime" / "decompositions" / outcome["revision_id"] / "journal.json"
         journal = json.loads(journal_path.read_text(encoding="utf-8"))
         journal["status"] = "committed"
@@ -260,7 +279,7 @@ class DecompositionBrokerTests(unittest.TestCase):
         result_path = self.workflow / "runtime/results/B.json"
         result_path.parent.mkdir(parents=True, exist_ok=True)
         result_path.write_text(json.dumps(self.result(self.proposal())), encoding="utf-8")
-        outcome = BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()), str(self.fake_codex))
+        outcome = BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()))
         record = self.workflow / "runtime/decompositions" / outcome["revision_id"]
         journal_path = record / "journal.json"
         journal = json.loads(journal_path.read_text(encoding="utf-8"))
@@ -286,7 +305,7 @@ class DecompositionBrokerTests(unittest.TestCase):
         self.assertEqual(BROKER.recover_pending(self.workflow, self.repo), [])
 
     def test_finalized_journal_is_historical_not_replayed(self) -> None:
-        BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()), str(self.fake_codex))
+        BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()))
         first = BROKER.recover_pending(self.workflow, self.repo)
         second = BROKER.recover_pending(self.workflow, self.repo)
         runtime = json.loads((self.workflow / "runtime.json").read_text(encoding="utf-8"))
@@ -299,7 +318,7 @@ class DecompositionBrokerTests(unittest.TestCase):
         result_path = self.workflow / "runtime" / "results" / "B.json"
         result_path.parent.mkdir(parents=True, exist_ok=True)
         result_path.write_text(json.dumps(self.result(self.proposal()), indent=2) + "\n", encoding="utf-8")
-        outcome = BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()), str(self.fake_codex))
+        outcome = BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()))
         record = self.workflow / "runtime" / "decompositions" / outcome["revision_id"]
         journal_path = record / "journal.json"
         journal = json.loads(journal_path.read_text(encoding="utf-8"))
@@ -324,7 +343,7 @@ class DecompositionBrokerTests(unittest.TestCase):
         self.assertTrue((record / "aborted-result.json").is_file())
 
     def test_recovery_rejects_untrusted_journal_paths_before_deletion(self) -> None:
-        outcome = BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()), str(self.fake_codex))
+        outcome = BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()))
         record = self.workflow / "runtime" / "decompositions" / outcome["revision_id"]
         journal_path = record / "journal.json"
         journal = json.loads(journal_path.read_text(encoding="utf-8"))
@@ -350,7 +369,7 @@ class DecompositionBrokerTests(unittest.TestCase):
         bad_review = self.workflow / "runtime" / "bad-review.json"
         bad_review.write_text("{}\n", encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "review rejected"):
-            BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()), str(self.fake_codex), bad_review)
+            BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()), bad_review)
         self.assertEqual((self.workflow / "graph.json").read_bytes(), before)
         runtime = json.loads((self.workflow / "runtime.json").read_text(encoding="utf-8"))
         self.assertEqual(runtime["decomposition"]["status"], "blocked")
@@ -361,9 +380,13 @@ class DecompositionBrokerTests(unittest.TestCase):
         result_path.parent.mkdir(parents=True, exist_ok=True)
         result_path.write_text(json.dumps(self.result(self.proposal()), indent=2) + "\n", encoding="utf-8")
 
-        outcome = RUNTIME.consume_result(
-            self.workflow, self.repo, self.workflow / "graph.json", "B", str(self.open_reviewer),
-        )
+        self.select_reviewer(self.open_reviewer, "open-review-test-v1")
+        try:
+            outcome = RUNTIME.consume_result(
+                self.workflow, self.repo, self.workflow / "graph.json", "B",
+            )
+        finally:
+            self.select_reviewer(self.fake_reviewer, "alternate-review-test-v1")
 
         graph = json.loads((self.workflow / "graph.json").read_text(encoding="utf-8"))
         node = next(item for item in graph["nodes"] if item["id"] == "B")
@@ -395,7 +418,7 @@ class DecompositionBrokerTests(unittest.TestCase):
             shutil.copytree(self.workflow, first)
             BROKER.build_candidate(first, "B", proposal)
             review, cache_key, cache_hit = BROKER.obtain_review(
-                self.workflow, first, proposal, str(self.fake_codex), config, "review-first", None,
+                self.workflow, first, proposal, config, "review-first", None,
             )
             self.assertFalse(cache_hit)
             self.assertEqual(review["status"], "passed")
@@ -404,7 +427,7 @@ class DecompositionBrokerTests(unittest.TestCase):
             shutil.copytree(self.workflow, second)
             BROKER.build_candidate(second, "B", proposal)
             cached, repeated_key, repeated_hit = BROKER.obtain_review(
-                self.workflow, second, proposal, "/missing/codex", config, "review-retry", None,
+                self.workflow, second, proposal, config, "review-retry", None,
             )
             self.assertTrue(repeated_hit)
             self.assertEqual(repeated_key, cache_key)
@@ -435,7 +458,7 @@ class DecompositionBrokerTests(unittest.TestCase):
             self.assertNotEqual(prompt_identity["review_contract_digest"], identity["review_contract_digest"])
 
     def test_corrupt_merkle_backup_blocks_recovery_before_live_mutation(self) -> None:
-        outcome = BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()), str(self.fake_codex))
+        outcome = BROKER.apply(self.workflow, self.repo, "B", self.result(self.proposal()))
         record = self.workflow / "runtime" / "decompositions" / outcome["revision_id"]
         journal_path = record / "journal.json"
         journal = json.loads(journal_path.read_text(encoding="utf-8"))
@@ -457,8 +480,8 @@ class DecompositionBrokerTests(unittest.TestCase):
         worker = (
             "import importlib.util,json,os,signal,sys; from pathlib import Path; "
             "spec=importlib.util.spec_from_file_location('broker',sys.argv[1]); broker=importlib.util.module_from_spec(spec); spec.loader.exec_module(broker); "
-            "point=sys.argv[6]; hook=lambda name: os.kill(os.getpid(),signal.SIGKILL) if name==point else None; "
-            "broker.apply(Path(sys.argv[2]),Path(sys.argv[3]),'B',json.loads(Path(sys.argv[4]).read_text()),sys.argv[5],fault_hook=hook)"
+            "point=sys.argv[5]; hook=lambda name: os.kill(os.getpid(),signal.SIGKILL) if name==point else None; "
+            "broker.apply(Path(sys.argv[2]),Path(sys.argv[3]),'B',json.loads(Path(sys.argv[4]).read_text()),fault_hook=hook)"
         )
         proposal = self.proposal()
         result = self.result(proposal)
@@ -472,7 +495,7 @@ class DecompositionBrokerTests(unittest.TestCase):
                 result_path.write_text(json.dumps(result), encoding="utf-8")
                 old_digest = BROKER.canonical_graph_digest(json.loads((case / "graph.json").read_text(encoding="utf-8")))
                 completed = subprocess.run(
-                    [sys.executable, "-c", worker, str(ROOT / "scripts" / "decomposition_broker.py"), str(case), str(self.repo), str(result_path), str(self.fake_codex), point],
+                    [sys.executable, "-c", worker, str(ROOT / "scripts" / "decomposition_broker.py"), str(case), str(self.repo), str(result_path), point],
                     capture_output=True, text=True, check=False,
                 )
                 self.assertEqual(completed.returncode, -signal.SIGKILL, completed.stdout + completed.stderr)

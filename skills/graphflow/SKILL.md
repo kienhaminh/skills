@@ -1,14 +1,15 @@
 ---
 name: graphflow
-description: Create, edit, and run persistent Codex workflow graphs with optional GitHub delivery.
+description: Create and run persistent, verified coding-work graphs across tools through digest-locked adapters and optional delivery.
 disable-model-invocation: true
 ---
 
-# Run a persistent Codex workflow graph
+# Run a persistent coding workflow graph
 
-Its bundled runtime stores state under `.codex/` and dispatches agent nodes through Codex. The runner
-owns scheduling, recovery, node execution, and
-durable state; the coordinator owns graph design, authority, integration, acceptance, and delivery.
+Graphflow stores tool-neutral state under `.graphflow/`. Agent nodes run through an explicit adapter;
+the core speaks only the neutral process contract while each wrapper owns its tool's CLI, model IDs,
+and session lifecycle. The runner owns scheduling, recovery, node execution, and durable state; the
+coordinator owns graph design, authority, integration, acceptance, and delivery.
 
 ## 1. Resolve identity and authority
 
@@ -16,7 +17,7 @@ Read [automation-lifecycle.md](references/automation-lifecycle.md). Create an un
 `workflow_id`, or require the exact ID to activate or resume an existing workflow:
 
 ```bash
-python3 <skill-dir>/scripts/workflow_state.py resolve .codex/workflows --workflow-id <id>
+python3 <skill-dir>/scripts/workflow_state.py resolve .graphflow/workflows --workflow-id <id>
 ```
 
 Effective authority is the intersection of the user request, executor policy, and repository policy.
@@ -63,8 +64,9 @@ Read [graph-contract.md](references/graph-contract.md),
 [executor-runtime.md](references/executor-runtime.md),
 [workspace-trust.md](references/workspace-trust.md),
 [checkout-guard.md](references/checkout-guard.md), and
-[method-routing.md](references/method-routing.md). Copy
-[workflow-template](assets/workflow-template) to `.codex/workflows/<id>/`, then adapt every normative
+[method-routing.md](references/method-routing.md), and [tool-adapters.md](references/tool-adapters.md).
+Copy [workflow-template](assets/workflow-template) to `.graphflow/workflows/<id>/`, configure one
+digest-locked agent adapter when the graph has agent executors, then adapt every normative
 artifact.
 
 - Cover every atomic requirement exactly once.

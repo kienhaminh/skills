@@ -42,6 +42,10 @@ def write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
 
 
+def digest(path: Path) -> str:
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 class RunnerLifecycleTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -64,6 +68,7 @@ class RunnerLifecycleTests(unittest.TestCase):
         git(self.repo, "remote", "add", "origin", hosting_url)
         git(self.repo, "push", "-q", "origin", "master")
         shutil.copytree(TEMPLATE, self.workflow)
+        self.configure_agent_adapter()
         self.configure_workflow()
         self.fake_codex = self.make_fake_codex()
         self.make_fake_gh()
@@ -146,7 +151,7 @@ class RunnerLifecycleTests(unittest.TestCase):
             "status": "proposed",
             "remote": "origin",
             "base_branch": "master",
-            "head_branch": "codex/runner-lifecycle",
+            "head_branch": "graphflow/runner-lifecycle",
             "record": {
                 "mode": "no_plan", "active_plan": None, "completed_plan": None,
                 "no_plan_reason": "The lifecycle eval is a bounded generated fixture.",
@@ -167,6 +172,25 @@ class RunnerLifecycleTests(unittest.TestCase):
         }
         write_json(runtime_path, runtime)
         checkout_guard.advance(self.workflow, self.repo)
+
+    def configure_agent_adapter(self) -> None:
+        adapter = self.workflow / "adapters" / "codex-cli.py"
+        adapter.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / "assets" / "adapter-templates" / "codex-cli.py", adapter)
+        runtime_path = self.workflow / "runtime.json"
+        runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        runtime["agent_adapter"] = {
+            "schema_version": 1,
+            "protocol": "graphflow-agent-adapter-v1",
+            "id": "codex-cli-test-v1",
+            "argv": ["python3", "adapters/codex-cli.py"],
+            "env_allow": [],
+            "resources": [{"path": "adapters/codex-cli.py", "digest": digest(adapter)}],
+            "sandbox_modes": ["read-only", "workspace-write"],
+            "model_map": {"small": "fake-small", "balanced": "fake-balanced", "frontier": "fake-frontier"},
+            "requires_authority": [],
+        }
+        write_json(runtime_path, runtime)
 
     def make_fake_codex(self) -> Path:
         path = self.bin_dir / "codex"
@@ -190,9 +214,9 @@ def review():
 if '--output-schema' not in args:
     review(); raise SystemExit(0)
 
-workflow=out.parents[2]
+workflow=Path(args[args.index('--output-schema')+1]).parents[1]
 graph=json.loads((workflow/'graph.json').read_text())
-node_id=out.name[1:].removesuffix('.agent-final.json')
+node_id=re.search(r'"node_id":\\s*"([^"]+)"',prompt).group(1)
 node=next(item for item in graph['nodes'] if item['id']==node_id)
 spec=json.loads((workflow/node['executor']['spec']).read_text())
 
@@ -254,8 +278,9 @@ out.parent.mkdir(parents=True,exist_ok=True); out.write_text(json.dumps(value))
     def run_workflow(self) -> subprocess.CompletedProcess[str]:
         environment = os.environ.copy()
         environment["PATH"] = str(self.bin_dir) + os.pathsep + environment.get("PATH", "")
+        environment["GRAPHFLOW_CODEX_BIN"] = str(self.fake_codex)
         return subprocess.run(
-            [sys.executable, str(RUNNER), str(self.workflow), "--repo-root", str(self.repo), "--codex-bin", str(self.fake_codex)],
+            [sys.executable, str(RUNNER), str(self.workflow), "--repo-root", str(self.repo)],
             capture_output=True, text=True, check=False, env=environment, timeout=180,
         )
 
@@ -276,7 +301,7 @@ out.parent.mkdir(parents=True,exist_ok=True); out.write_text(json.dumps(value))
         if first.returncode:
             failure_detail += "\nGRAPH\n" + (self.workflow / "graph.json").read_text(encoding="utf-8")
             failure_detail += "\nEVENTS\n" + (self.workflow / "runtime" / "events.jsonl").read_text(encoding="utf-8")
-            for path in (self.workflow / "runtime" / "agent-events").glob("*.jsonl"):
+            for path in (self.workflow / "runtime" / "agent-events").glob("*.json"):
                 failure_detail += f"\n{path.name}\n" + path.read_text(encoding="utf-8")
         self.assertEqual(first.returncode, 0, failure_detail)
         self.assertEqual(json.loads(first.stdout)["status"], "waiting")
@@ -307,7 +332,7 @@ out.parent.mkdir(parents=True,exist_ok=True); out.write_text(json.dumps(value))
         runtime = json.loads((self.workflow / "runtime.json").read_text(encoding="utf-8"))
         self.assertEqual(runtime["delivery"]["status"], "published")
         proof = json.loads((self.workflow / "runtime" / "delivery" / "proof.json").read_text(encoding="utf-8"))
-        remote = git(self.repo, "ls-remote", "--heads", "origin", "refs/heads/codex/runner-lifecycle")
+        remote = git(self.repo, "ls-remote", "--heads", "origin", "refs/heads/graphflow/runner-lifecycle")
         self.assertTrue(remote.startswith(proof["release_sha"]))
 
 

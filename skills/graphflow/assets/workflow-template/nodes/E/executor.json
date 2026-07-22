@@ -14,7 +14,7 @@
     {"path": "nodes/E/prompt.md", "digest": "sha256:399724b730756b3cb3fb9f10b21ef8e0eec2fbdaa745813e24f7fcb598f29b1c"}
   ],
   "prompt": "nodes/E/prompt.md",
-  "model": "gpt-5.6-sol",
+  "model_class": "small",
   "reasoning_effort": "medium",
   "sandbox": "workspace-write"
 }

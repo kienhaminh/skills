@@ -11,7 +11,7 @@ Use the cheapest artifact that can falsify a wrong interpretation before broad e
 | Data/automation | Before-after sample, dry-run, rollback/trace | Evidence |
 | Research/document | Outline plus representative section/table | Baseline |
 
-Disposable artifacts live under `.codex/workflows/<id>/prototype/`; promotable code uses an isolated worktree, never the shared modifying checkout.
+Disposable artifacts live under `.graphflow/workflows/<id>/prototype/`; promotable code uses an isolated worktree, never the shared modifying checkout.
 
 ## Manifest + graph lock
 

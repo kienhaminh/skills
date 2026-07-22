@@ -59,7 +59,7 @@
     "schema_version": 1,
     "policy": "structural-decomposition-v1",
     "status": "idle",
-    "reviewer_model": "gpt-5.6-terra",
+    "reviewer_model_class": "small",
     "reviewer_reasoning_effort": "low",
     "active_node": null,
     "revision": 0,
@@ -67,5 +67,6 @@
     "failure": null,
     "updated_at": null
   },
-  "goal_adapter": null
+  "caller_adapter": null,
+  "agent_adapter": null
 }

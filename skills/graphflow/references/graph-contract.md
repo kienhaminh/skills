@@ -11,7 +11,7 @@ Use [the bundled graph](../assets/workflow-template/graph.json) as the Graphflow
 - **Routing:** ordered `operations` derive project-local `skills`; `graphflow` is never a worker skill.
 - **Budget:** positive node budgets sum to at most `constraints.token_budget`.
 - **Authority:** caller IDs, leases, schedules, delivery authority, and cost choices stay outside `graph.json`.
-- **Dependency Inversion:** each non-expansion node references one locked executor; Goal bindings are forbidden in the graph and optional at runtime.
+- **Dependency Inversion:** each non-expansion node references one locked executor; caller-session bindings are forbidden in the graph and optional at runtime.
 - **Shared memory:** coordinator owns `memory/`; nodes submit CAS deltas and may not claim memory artifact paths.
 - **Proof-Carrying Work:** coordinator owns `integrity/`; only verify nodes own `evidence/attestations`; executable graphs lock plan and runner digests.
 - **YAGNI:** optional discoveries live in root `optional_work`, never cover requirements, and never block completion.

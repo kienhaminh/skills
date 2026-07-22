@@ -62,7 +62,29 @@ def approve_intent_and_review(workflow: Path) -> None:
     question_gate.lock(workflow)
 
 
+def install_noop_adapter(workflow: Path) -> None:
+    """Install a locked adapter contract for tests that never dispatch an agent."""
+    adapter = workflow / "adapters" / "noop.py"
+    adapter.parent.mkdir(parents=True, exist_ok=True)
+    adapter.write_text("import json,sys\njson.dump({},sys.stdout)\n", encoding="utf-8")
+    runtime_path = workflow / "runtime.json"
+    runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+    runtime["agent_adapter"] = {
+        "schema_version": 1,
+        "protocol": "graphflow-agent-adapter-v1",
+        "id": "fixture-noop-v1",
+        "argv": ["python3", "adapters/noop.py"],
+        "env_allow": [],
+        "resources": [{"path": "adapters/noop.py", "digest": "sha256:" + hashlib.sha256(adapter.read_bytes()).hexdigest()}],
+        "sandbox_modes": ["read-only", "workspace-write"],
+        "model_map": {"small": "small", "balanced": "balanced", "frontier": "frontier"},
+        "requires_authority": [],
+    }
+    write_json(runtime_path, runtime)
+
+
 def approve_template_for_execution(workflow: Path, repo: Path) -> None:
     """Supply every execution precondition for a disposable test workflow."""
+    install_noop_adapter(workflow)
     approve_intent_and_review(workflow)
     evidence_runner.command_lock(workflow, repo)

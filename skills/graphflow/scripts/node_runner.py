@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
-"""Run one digest-locked Graphflow node executor without a Goal trigger."""
+"""Run one digest-locked Graphflow node executor without a caller-session trigger."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import os
-import shutil
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
 from executor_common import atomic_bytes, atomic_json, canonical_graph_digest, inside, load_executor, load_json, now_utc, sha256, validate_result
+import agent_adapter
+import memory_state
 import progress_state
 import workspace_manager
 
@@ -30,15 +31,8 @@ CONTROL_PLANE_ROOTS = (
     "runtime/decompositions",
     "runtime/delivery",
     "runtime/scope",
+    "adapters",
 )
-
-
-def allowed_environment(names: list[str]) -> dict[str, str]:
-    baseline = {name: os.environ[name] for name in ("PATH", "LANG", "LC_ALL", "TMPDIR") if name in os.environ}
-    for name in names:
-        if name in os.environ:
-            baseline[name] = os.environ[name]
-    return baseline
 
 
 def check_authority(workflow_dir: Path, spec: dict[str, Any], node_id: str) -> None:
@@ -73,6 +67,11 @@ def control_plane_files(workflow_dir: Path, graph: dict[str, Any], spec: dict[st
     for resource in spec.get("resources", []):
         if isinstance(resource, dict) and isinstance(resource.get("path"), str):
             paths.add(inside(workflow_dir, resource["path"], "executor resource"))
+    runtime = load_json(workflow_dir / "runtime.json", "runtime")
+    adapter = runtime.get("agent_adapter") if isinstance(runtime, dict) else None
+    for resource in adapter.get("resources", []) if isinstance(adapter, dict) else []:
+        if isinstance(resource, dict) and isinstance(resource.get("path"), str):
+            paths.add(inside(workflow_dir, resource["path"], "agent adapter resource"))
     for path in (workflow_dir / "nodes").rglob("executor.json") if (workflow_dir / "nodes").is_dir() else []:
         paths.add(path.resolve())
     requests_dir = workflow_dir / "runtime" / "requests"
@@ -262,7 +261,7 @@ def envelope(graph: dict[str, Any], node: dict[str, Any], spec: dict[str, Any], 
 def run_command(graph: dict[str, Any], node: dict[str, Any], spec: dict[str, Any], cwd: Path) -> dict[str, Any]:
     try:
         completed = subprocess.run(
-            spec["argv"], cwd=cwd, env=allowed_environment(spec.get("env_allow", [])),
+            spec["argv"], cwd=cwd, env=agent_adapter.allowed_environment(spec.get("env_allow", [])),
             capture_output=True, text=True, timeout=spec["timeout_seconds"], check=False,
         )
     except (OSError, subprocess.TimeoutExpired) as error:
@@ -275,7 +274,7 @@ def run_command(graph: dict[str, Any], node: dict[str, Any], spec: dict[str, Any
 
 def run_agent(
     graph: dict[str, Any], node: dict[str, Any], spec: dict[str, Any], workflow_dir: Path, cwd: Path,
-    codex_bin: str, confirmation: dict[str, Any] | None,
+    confirmation: dict[str, Any] | None,
 ) -> dict[str, Any]:
     prompt = inside(workflow_dir, spec["prompt"], "executor.prompt").read_text(encoding="utf-8")
     identity = envelope(graph, node, spec, "failed", "identity")
@@ -298,31 +297,34 @@ def run_agent(
     )
     if confirmation is not None:
         prompt += "\n\nDigest-bound confirmation response:\n" + json.dumps(confirmation, sort_keys=True)
-    final_path = workflow_dir / "runtime" / "results" / f".{node['id']}.agent-final.json"
-    events_path = workflow_dir / "runtime" / "agent-events" / f"{node['id']}.jsonl"
-    final_path.parent.mkdir(parents=True, exist_ok=True)
-    events_path.parent.mkdir(parents=True, exist_ok=True)
-    command = [
-        codex_bin, "exec", "--json", "--output-schema", str(inside(workflow_dir, spec["result_schema"], "executor.result_schema")),
-        "--output-last-message", str(final_path), "--cd", str(cwd), "--sandbox", spec["sandbox"],
-        "--config", 'approval_policy="never"', "--ephemeral",
-    ]
-    if spec.get("model"):
-        command.extend(["--model", spec["model"]])
-    if spec.get("reasoning_effort"):
-        command.extend(["--config", f"model_reasoning_effort={spec['reasoning_effort']}"])
-    command.append("-")
+    capsule_path = workflow_dir / "memory" / "capsules" / f"{node['id']}.json"
+    if capsule_path.is_file():
+        memory_state.command_validate(workflow_dir, cwd, "active", False)
+        capsule = load_json(capsule_path, "bounded shared-memory capsule")
+        if not isinstance(capsule, dict) or capsule.get("node_id") != node.get("id"):
+            return envelope(graph, node, spec, "failed", "Bounded shared-memory capsule has the wrong node identity.")
+        prompt += "\n\nBounded shared-memory capsule (coordinator-generated; evidence references only):\n" + json.dumps(capsule, sort_keys=True)
     try:
-        completed = subprocess.run(
-            command, input=prompt, cwd=cwd, env=allowed_environment(spec.get("env_allow", [])),
-            capture_output=True, text=True, timeout=spec["timeout_seconds"], check=False,
+        result, metadata = agent_adapter.invoke(
+            workflow_dir,
+            {
+                "schema_version": 1,
+                "protocol": agent_adapter.PROTOCOL,
+                "kind": "node",
+                "prompt": prompt,
+                "cwd": str(cwd),
+                "output_schema": str(inside(workflow_dir, spec["result_schema"], "executor.result_schema")),
+                "sandbox": spec["sandbox"],
+                "model_class": spec.get("model_class"),
+                "reasoning_effort": spec.get("reasoning_effort"),
+            },
+            timeout_seconds=spec["timeout_seconds"],
+            executor_env_allow=spec.get("env_allow", []),
+            declared_authority=spec.get("requires_authority", []),
         )
-    except (OSError, subprocess.TimeoutExpired) as error:
+    except ValueError as error:
         return envelope(graph, node, spec, "failed", f"Agent executor failed: {error}")
-    events_path.write_text(completed.stdout, encoding="utf-8")
-    if completed.returncode != 0 or not final_path.is_file():
-        return envelope(graph, node, spec, "failed", f"Agent executor exited with {completed.returncode} before a valid result.")
-    result = load_json(final_path, "agent result")
+    atomic_json(workflow_dir / "runtime" / "agent-events" / f"{node['id']}.json", metadata)
     errors = validate_result(result, str(graph.get("workflow_id")), str(node.get("id")), int(identity["attempt"]), str(spec["idempotency_key"]))
     if errors:
         return envelope(graph, node, spec, "failed", "Invalid agent result: " + "; ".join(errors))
@@ -334,13 +336,14 @@ def main() -> int:
     parser.add_argument("workflow_dir", type=Path)
     parser.add_argument("--node", required=True)
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
-    parser.add_argument("--codex-bin", default=shutil.which("codex") or "codex")
     parser.add_argument("--confirmation-file", type=Path)
     args = parser.parse_args()
     workflow_dir = args.workflow_dir.resolve()
     repo_root = args.repo_root.resolve()
     try:
         graph, node, spec, result_path = load_executor(workflow_dir, args.node)
+        if spec["type"] == "agent":
+            agent_adapter.validate_executor(workflow_dir, spec)
         check_authority(workflow_dir, spec, str(node["id"]))
         cwd, workspace = workspace_manager.resolve(workflow_dir, repo_root, spec, str(node["id"]), provision=True)
         workspace_root = Path(str(workspace["path"])).resolve()
@@ -360,7 +363,7 @@ def main() -> int:
         if spec["type"] == "command":
             result = run_command(graph, node, spec, cwd)
         else:
-            result = run_agent(graph, node, spec, workflow_dir, cwd, args.codex_bin, confirmation)
+            result = run_agent(graph, node, spec, workflow_dir, cwd, confirmation)
         control_plane_changes = restore_control_plane(workflow_dir, args.node, protected, control_plane_inventories)
         if control_plane_changes:
             result = envelope(graph, node, spec, "failed", "Executor attempted control-plane mutation: " + ", ".join(control_plane_changes))

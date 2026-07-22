@@ -172,7 +172,7 @@ class DeliveryBrokerTests(unittest.TestCase):
             "status": "proposed",
             "remote": "origin",
             "base_branch": "master",
-            "head_branch": "codex/delivery-eval",
+            "head_branch": "graphflow/delivery-eval",
             "record": {"mode": "no_plan", "active_plan": None, "completed_plan": None, "no_plan_reason": "This bounded change has no plan file."},
             "commit": {"subject": "feat(server): publish verified tree", "body": "Land the verified Graphflow delivery-eval tree."},
             "pull_request": {
@@ -239,7 +239,7 @@ class DeliveryBrokerTests(unittest.TestCase):
     def test_publish_is_manifest_bound_tree_exact_and_idempotent(self) -> None:
         prepared = DELIVERY.prepare(self.workflow, self.repo)
         self.assertEqual(prepared["status"], "waiting_approval")
-        self.assertIsNone(self.remote_ref("codex/delivery-eval"))
+        self.assertIsNone(self.remote_ref("graphflow/delivery-eval"))
         self.assertFalse((self.workflow / "runtime/delivery/proof.json").exists())
         self.confirm()
 
@@ -249,7 +249,7 @@ class DeliveryBrokerTests(unittest.TestCase):
         manifest = json.loads((self.workflow / "runtime/delivery/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(proof["release_tree"], manifest["verified_tree"])
         self.assertEqual(command(self.repo, "rev-parse", f"{proof['release_sha']}^"), manifest["base_sha"])
-        self.assertEqual(self.remote_ref("codex/delivery-eval"), proof["release_sha"])
+        self.assertEqual(self.remote_ref("graphflow/delivery-eval"), proof["release_sha"])
         self.assertEqual(self.delivery()["status"], "published")
         self.assertIsNone(self.delivery()["grant"])
         self.assertEqual(DELIVERY.advance(self.workflow, self.repo, "/missing/gh"), published)
@@ -275,7 +275,7 @@ class DeliveryBrokerTests(unittest.TestCase):
         self.assertEqual(outcome["status"], "waiting_external")
         self.assertIn("preflight failed", outcome["failure"])
         self.assertEqual(json.loads(trace.read_text(encoding="utf-8"))[:3], ["auth", "status", "--hostname"])
-        self.assertIsNone(self.remote_ref("codex/delivery-eval"))
+        self.assertIsNone(self.remote_ref("graphflow/delivery-eval"))
 
     def test_preflight_does_not_touch_gh_without_network_and_credential_authority(self) -> None:
         runtime_path = self.workflow / "runtime.json"
@@ -318,19 +318,33 @@ class DeliveryBrokerTests(unittest.TestCase):
         self.assertFalse(marker.exists())
 
     def test_recursive_split_parallel_worktrees_verification_and_ship_lifecycle(self) -> None:
-        reviewer = self.root / "fake-decomposition-reviewer"
+        reviewer = self.workflow / "runtime" / "fake-decomposition-reviewer"
+        reviewer.parent.mkdir(parents=True, exist_ok=True)
         reviewer.write_text(
             "#!/usr/bin/env python3\n"
             "import json,re,sys\n"
-            "from pathlib import Path\n"
-            "args=sys.argv; out=Path(args[args.index('--output-last-message')+1]); prompt=sys.stdin.read()\n"
+            "request=json.load(sys.stdin); prompt=request['prompt']\n"
             "def field(name):\n"
             "  m=re.search(name+r\"='([^']+)'\",prompt); return m.group(1)\n"
             "review={'schema_version':1,'workflow_id':field('workflow_id'),'graph_digest':field('graph_digest'),'methods':['Rumsfeld Matrix','Value of Information','Reversibility','Premortem'],'reviewer':{'agent_id':field('reviewer.agent_id'),'model_class':'small','model_id':'fake-small','independent':True,'context_policy':'fresh-artifacts-only'},'challenges':[{'class':'misread-intent','result':'clear','rationale':'Intent is unchanged.'},{'class':'hidden-dependency','result':'clear','rationale':'Output ancestry is closed.'},{'class':'oracle-gap','result':'clear','rationale':'Locked checks are conserved.'}],'findings':[],'status':'passed','reviewed_at':'2026-07-20T00:00:00Z'}\n"
-            "out.parent.mkdir(parents=True,exist_ok=True); out.write_text(json.dumps(review))\n",
+            "json.dump(review,sys.stdout)\n",
             encoding="utf-8",
         )
         reviewer.chmod(0o700)
+        runtime_path = self.workflow / "runtime.json"
+        runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        runtime["agent_adapter"] = {
+            "schema_version": 1,
+            "protocol": "graphflow-agent-adapter-v1",
+            "id": "delivery-review-test-v1",
+            "argv": ["python3", "runtime/fake-decomposition-reviewer"],
+            "env_allow": [],
+            "resources": [{"path": "runtime/fake-decomposition-reviewer", "digest": "sha256:" + hashlib.sha256(reviewer.read_bytes()).hexdigest()}],
+            "sandbox_modes": ["read-only", "workspace-write"],
+            "model_map": {"small": "fake-small", "balanced": "fake-balanced", "frontier": "fake-frontier"},
+            "requires_authority": [],
+        }
+        write_json(runtime_path, runtime)
         DECOMPOSITION.memory_state.command_init(self.workflow, self.repo)
 
         graph_path = self.workflow / "graph.json"
@@ -396,14 +410,14 @@ class DeliveryBrokerTests(unittest.TestCase):
             }
 
         first = proposal("B", 5, "analyze", "materialize", ["CHK-SHIP-NEGATIVE"], ["CHK-SHIP-BOUNDARY"])
-        DECOMPOSITION.apply(self.workflow, self.repo, "B", result("B", first), str(reviewer))
+        DECOMPOSITION.apply(self.workflow, self.repo, "B", result("B", first))
         graph = json.loads(graph_path.read_text(encoding="utf-8"))
         terminal = next(node for node in graph["nodes"] if node["id"] == "B.materialize")
         terminal["status"] = "active"
         terminal["retry"]["attempts"] = 1
         write_json(graph_path, graph)
         second = proposal("B.materialize", 3, "refine", "finish", ["CHK-SHIP-BOUNDARY"], ["CHK-SHIP-BOUNDARY"])
-        DECOMPOSITION.apply(self.workflow, self.repo, "B.materialize", result("B.materialize", second), str(reviewer))
+        DECOMPOSITION.apply(self.workflow, self.repo, "B.materialize", result("B.materialize", second))
 
         graph = json.loads(graph_path.read_text(encoding="utf-8"))
         recursive_terminal = next(node for node in graph["nodes"] if node["id"] == "B.materialize.finish")
@@ -478,18 +492,18 @@ class DeliveryBrokerTests(unittest.TestCase):
         outcome = DELIVERY.advance(self.workflow, self.repo, str(self.fake_gh))
         self.assertEqual(outcome["status"], "waiting_external")
         self.assertIn("Remote base moved", outcome["failure"])
-        self.assertIsNone(self.remote_ref("codex/delivery-eval"))
+        self.assertIsNone(self.remote_ref("graphflow/delivery-eval"))
         self.assertFalse((self.workflow / "runtime/delivery/proof.json").exists())
 
     def test_existing_different_remote_head_never_force_pushes(self) -> None:
         DELIVERY.prepare(self.workflow, self.repo)
         self.confirm()
         base = command(self.repo, "rev-parse", "master")
-        command(self.repo, "push", "-q", "origin", f"{base}:refs/heads/codex/delivery-eval")
+        command(self.repo, "push", "-q", "origin", f"{base}:refs/heads/graphflow/delivery-eval")
         outcome = DELIVERY.advance(self.workflow, self.repo, str(self.fake_gh))
         self.assertEqual(outcome["status"], "waiting_external")
         self.assertIn("force push is forbidden", outcome["failure"])
-        self.assertEqual(self.remote_ref("codex/delivery-eval"), base)
+        self.assertEqual(self.remote_ref("graphflow/delivery-eval"), base)
 
     def test_confirmation_digest_covers_ship_manifest(self) -> None:
         prepared = DELIVERY.prepare(self.workflow, self.repo)
@@ -528,7 +542,7 @@ class DeliveryBrokerTests(unittest.TestCase):
         self.assertNotEqual(outcome["request_id"], first["request_id"])
         old_request = json.loads((self.workflow / "runtime/requests" / f"{first['request_id']}.json").read_text(encoding="utf-8"))
         self.assertEqual(old_request["status"], "superseded")
-        self.assertIsNone(self.remote_ref("codex/delivery-eval"))
+        self.assertIsNone(self.remote_ref("graphflow/delivery-eval"))
 
     def test_ship_adapter_accepts_a_repository_configured_remote_and_base(self) -> None:
         command(self.repo, "remote", "rename", "origin", "upstream")
@@ -543,7 +557,7 @@ class DeliveryBrokerTests(unittest.TestCase):
         self.confirm()
         published = DELIVERY.advance(self.workflow, self.repo, str(self.fake_gh))
         self.assertEqual(published["status"], "published")
-        self.assertEqual(self.remote_ref("codex/delivery-eval", "upstream"), published["release_sha"])
+        self.assertEqual(self.remote_ref("graphflow/delivery-eval", "upstream"), published["release_sha"])
 
     def test_fabricated_attestation_blocks_ship_prepare(self) -> None:
         evidence = self.workflow / "evidence/attestations/CHK-SHIP-NEGATIVE.json"
@@ -552,7 +566,7 @@ class DeliveryBrokerTests(unittest.TestCase):
         write_json(evidence, current)
         with self.assertRaisesRegex(ValueError, "log missing or digest mismatch"):
             DELIVERY.prepare(self.workflow, self.repo)
-        self.assertIsNone(self.remote_ref("codex/delivery-eval"))
+        self.assertIsNone(self.remote_ref("graphflow/delivery-eval"))
 
 
 if __name__ == "__main__":

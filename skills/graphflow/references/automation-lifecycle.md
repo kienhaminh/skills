@@ -1,20 +1,20 @@
 # Automation lifecycle
 
-The graph schema and caller lifecycle are provider-neutral. This bundled Graphflow implementation is
-Codex-scoped: it stores workflows under `.codex/` and its agent executor invokes Codex. Goal, loop,
-and manual callers remain optional invocation and observation adapters.
+The graph schema, scheduler, and caller lifecycle are coding-tool neutral. Graphflow stores workflows
+under `.graphflow/`; agent execution is available only through an explicit digest-locked adapter.
+Chat tasks, loops, IDEs, and manual callers remain optional invocation and observation adapters.
 
 ## Explicit workflow identity
 
-- **Create:** `$graphflow <objective>` derives an unused kebab-case ID, creates `.codex/workflows/<id>/`, and returns the ID.
-- **Activate/resume:** caller must supply exact `workflow_id`; never infer it from chat, branch, Goal, or directory proximity.
-- Resolve with `python3 <skill-dir>/scripts/workflow_state.py resolve .codex/workflows --workflow-id <id>`.
+- **Create:** `$graphflow <objective>` derives an unused kebab-case ID, creates `.graphflow/workflows/<id>/`, and returns the ID.
+- **Activate/resume:** caller must supply exact `workflow_id`; never infer it from chat, branch, caller session, or directory proximity.
+- Resolve with `python3 <skill-dir>/scripts/workflow_state.py resolve .graphflow/workflows --workflow-id <id>`.
 - `graph.json` stores only `workflow_id`; caller/provider IDs stay in runtime state and never become liveness dependencies.
 
 ## Artifact layout
 
 ```text
-.codex/workflows/<id>/
+.graphflow/workflows/<id>/
   graph.json
   runtime.json
   runtime/events.jsonl
@@ -90,4 +90,4 @@ Never erase a failed branch from requirement coverage.
 
 Keep routine scheduling, polling, routing, and retries internal. Ask only for material intent, prototype/baseline, authority, cost-risk, or irreversible decisions. Report material scope/risk reversals, workflow-wide blockers, delivery-readiness changes, and completion.
 
-Goal independence is a release gate: the same workflow must reach an honest terminal/waiting state from `run_workflow.py` with no Goal binding. The lifecycle eval must invoke the real runner through recursive decomposition, parallel worktrees, integration, verification proposal, approval wait/resume, and Ship proof; directly marking nodes complete is not lifecycle evidence. On completion, clear owned leases, stop owned dashboard processes, retain evidence, and archive only after observers no longer need the active path.
+Caller independence is a release gate: the same workflow must reach an honest terminal/waiting state from `run_workflow.py` with no chat, IDE, or loop binding. The lifecycle eval must invoke the real runner through recursive decomposition, parallel worktrees, integration, verification proposal, approval wait/resume, and Ship proof; directly marking nodes complete is not lifecycle evidence. On completion, clear owned leases, stop owned dashboard processes, retain evidence, and archive only after observers no longer need the active path.

@@ -27,7 +27,7 @@ The installer lets you select supported agents, including Codex. Set `DISABLE_TE
 | [bootstrap](./skills/bootstrap/SKILL.md) | Maps and rehabilitates a repository from live evidence. | Discovers stack, documentation, commands, and agent conventions from the target repository. |
 | [brainstorming](./skills/brainstorming/SKILL.md) | Decomposes an ambiguous decision into a labelled problem tree and one synthesis. | General reasoning; routes feature briefs and concrete failures to their dedicated skills. |
 | [debugging](./skills/debugging/SKILL.md) | Produces evidence-bounded root-cause analysis without silently implementing a fix. | Uses the target repository's own debugging and verification contract. |
-| [graphflow](./skills/graphflow/SKILL.md) | Creates and runs persistent verified work graphs. | User-invoked Codex orchestration with repository-proved execution and delivery policy. |
+| [graphflow](./skills/graphflow/SKILL.md) | Creates and runs persistent verified work graphs. | Provider-neutral coding-tool orchestration through digest-locked adapters, with repository-proved execution and delivery policy. |
 | [grill-me](./skills/grill-me/SKILL.md) | Turns a vague feature request into grounded alternatives, risks, and an implementation brief. | Discovers planning, provenance, and product constraints from the target source. |
 | [implement](./skills/implement/SKILL.md) | Converts an agreed story, plan, or red test into the smallest proven production change. | Discovers owners, commands, and gates from the target repository. |
 | [ship](./skills/ship/SKILL.md) | Gates, records, commits, and publishes finished work. | Discovers task lifecycle, Git policy, remote, base branch, and hosting mechanism. |
@@ -38,7 +38,7 @@ The installer lets you select supported agents, including Codex. Set `DISABLE_TE
 | [writing-great-skills](./skills/writing-great-skills/SKILL.md) | Audits skills for predictable invocation and execution. | User-invoked authoring and evaluation rubric. |
 
 Public skills discover repository-owned paths, commands, and policy from the target checkout. A
-runtime-specific surface is named explicitly in its skill contract, such as Graphflow's Codex storage
+runtime-specific surface is named explicitly in its skill contract, such as Graphflow's coding-tool adapter
 and executor adapter. Project-specific behavior belongs in that repository's instructions or
 evaluation fixture, not in the reusable skill contract.
 

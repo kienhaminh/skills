@@ -10,5 +10,5 @@
   "env_allow": [],
   "requires_authority": [],
   "resources": [{"path": "nodes/node-result.schema.json", "digest": "sha256:9ff27ce7cfd16cc2ebc75d24c1d87a66b16fc7460a6cebef728fe428ca4edff0"}],
-  "argv": ["python3", "-m", "json.tool", ".codex/workflows/publish-queue-bulk-retry/prototype/manifest.json"]
+  "argv": ["python3", "-m", "json.tool", ".graphflow/workflows/publish-queue-bulk-retry/prototype/manifest.json"]
 }

@@ -138,7 +138,7 @@
       "retry": {"attempts": 0, "max_attempts": 2, "last_failure_class": null},
       "runtime": {
         "agent": "coordinator",
-        "model": "gpt-5.6-sol",
+        "model_class": "frontier",
         "reasoning_effort": "high",
         "routing_reason": "Coordinator owns graph structure and delivery decisions.",
         "started_at": null,
@@ -156,7 +156,7 @@
         "schema_version": 1,
         "type": "command",
         "spec": "nodes/P/executor.json",
-      "digest": "sha256:1eef531689779a3908398bf68a2bea29870746afc2776244844b70984e0e896e",
+        "digest": "sha256:eda052344a73a6662877986b55e63289ef8697e0433d5a481ac9dde42e5848ad",
         "result": "runtime/results/P.json"
       },
       "operations": ["prototyping"],
@@ -187,7 +187,7 @@
       "retry": {"attempts": 0, "max_attempts": 2, "last_failure_class": null},
       "runtime": {
         "agent": "prototype-agent",
-        "model": "gpt-5.6-terra",
+        "model_class": "small",
         "reasoning_effort": "low",
         "routing_reason": "Cheap static intent baseline.",
         "started_at": null,
@@ -205,7 +205,7 @@
         "schema_version": 1,
         "type": "agent",
         "spec": "nodes/B/executor.json",
-      "digest": "sha256:3a879f926dfbb64708644494d80926be45656ae7f5e854b19d59a7c8cd0fa81c",
+        "digest": "sha256:d84865442d18a3bfd0a5cd2d152ae9bc23665b6ff70bc9c0b7addd48033dc381",
         "result": "runtime/results/B.json"
       },
       "operations": ["implementation"],
@@ -236,7 +236,7 @@
       "retry": {"attempts": 0, "max_attempts": 2, "last_failure_class": null},
       "runtime": {
         "agent": "contract-agent",
-        "model": "gpt-5.6-terra",
+        "model_class": "balanced",
         "reasoning_effort": "medium",
         "routing_reason": "Isolated contract owner with deterministic schema tests.",
         "started_at": null,
@@ -254,7 +254,7 @@
         "schema_version": 1,
         "type": "agent",
         "spec": "nodes/C/executor.json",
-        "digest": "sha256:e54e2c77c98f515e5d00b6db8ef5f6303b86b33cb2126c221f8482b9fba125d0",
+        "digest": "sha256:12b64e2e6c5c071c1b2860b6cb494173864448660f0f4bd64c8ff23588120ac2",
         "result": "runtime/results/C.json"
       },
       "operations": ["test-design", "implementation"],
@@ -285,7 +285,7 @@
       "retry": {"attempts": 0, "max_attempts": 2, "last_failure_class": null},
       "runtime": {
         "agent": "server-agent",
-        "model": "gpt-5.6-terra",
+        "model_class": "balanced",
         "reasoning_effort": "medium",
         "routing_reason": "Bounded backend ownership with focused service tests.",
         "started_at": null,
@@ -304,7 +304,7 @@
         "schema_version": 1,
         "type": "agent",
         "spec": "nodes/D/executor.json",
-      "digest": "sha256:e1e310dbca3b8598bdf5e2f6f7629cf1ae8ae391f77cc69b62fa9d13e38e06ee",
+        "digest": "sha256:26dd04e8f4211b38866c02fc25150a3cf0b03bda730ee249e4dddad164879552",
         "result": "runtime/results/D.json"
       },
       "operations": ["implementation"],
@@ -350,7 +350,7 @@
         "schema_version": 1,
         "type": "agent",
         "spec": "nodes/E/executor.json",
-      "digest": "sha256:1ad6ad84a67e83466a10f300e64d7242dd0c63a3c6e3c1678f7e7722eebe075b",
+        "digest": "sha256:2f41ed26e3f4e6ac2d04192c7ab104fea7f1672941141af511c1c80563748cdd",
         "result": "runtime/results/E.json"
       },
       "operations": ["integration", "implementation"],
@@ -396,7 +396,7 @@
         "schema_version": 1,
         "type": "agent",
         "spec": "nodes/F/executor.json",
-      "digest": "sha256:763854d3013ed6cde678b2e2e4072f228ac0051ea0c822a036c6d32c97b36a0d",
+        "digest": "sha256:8dca3277db414750792b9709bfecabc7c0b597c25737ca695bf17c2661305843",
         "result": "runtime/results/F.json"
       },
       "operations": ["verification"],

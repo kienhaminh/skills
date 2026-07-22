@@ -17,7 +17,7 @@ SPEC = importlib.util.spec_from_file_location("workflow_evidence", ROOT / "scrip
 assert SPEC and SPEC.loader
 EVIDENCE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(EVIDENCE)
-from skills.graphflow.evals.fixture_support import approve_intent_and_review
+from skills.graphflow.evals.fixture_support import approve_intent_and_review, install_noop_adapter
 
 
 class EvidenceRunnerTests(unittest.TestCase):
@@ -25,6 +25,7 @@ class EvidenceRunnerTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.workflow = Path(self.temporary.name) / "workflow"
         shutil.copytree(TEMPLATE, self.workflow)
+        install_noop_adapter(self.workflow)
         self.repo = Path(self.temporary.name) / "repo"
         for path in (
             "packages/contracts/src/publish-retry.ts",

@@ -11,7 +11,7 @@ The persistent runner owns dispatch; the coordinator owns graph mutation, accept
 | Cross-boundary contract, integration, ambiguous diagnosis | frontier / medium-high | irreversible/high-stakes uncertainty remains |
 | Graph design, pivotal intent, final synthesis | coordinator frontier | n/a |
 
-Model names are executor/runtime metadata. Graph contracts describe capability, budget, and routing reason—not a Goal or provider dependency. Freeze the selected route in the executor spec and digest after the cost choice.
+Provider model names live only in the agent adapter map. Graph contracts describe model class, capability, budget, and routing reason—not a caller or provider dependency. Freeze the selected model class in the executor spec and digest after the cost choice.
 
 ## Routing score
 
@@ -25,7 +25,7 @@ Critical-path or uncertainty-reducing nodes win ties. Parallelize only independe
 
 ## Context budget
 
-For agent executor prompts, or `fork_turns: "none"` when using an in-chat adapter, pass only:
+For agent executor prompts, including fresh in-chat adapters, pass only:
 
 1. method names and one task-specific application;
 2. node outcome/non-goals, scopes, acceptance, budget, return schema;

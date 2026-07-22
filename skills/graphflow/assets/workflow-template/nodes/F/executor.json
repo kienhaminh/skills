@@ -14,7 +14,7 @@
     {"path": "nodes/F/prompt.md", "digest": "sha256:d152fd4102002af491c5674071796350c39ac9faf39a22173e904a971ab8539f"}
   ],
   "prompt": "nodes/F/prompt.md",
-  "model": "gpt-5.6-sol",
+  "model_class": "frontier",
   "reasoning_effort": "high",
   "sandbox": "read-only"
 }

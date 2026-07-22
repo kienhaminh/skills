@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for Goal-independent executor dispatch and confirmations."""
+"""Regression tests for caller-independent executor dispatch and confirmations."""
 
 from __future__ import annotations
 
@@ -14,6 +14,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import run_workflow as WORKFLOW_RUNTIME
+import agent_adapter
+import memory_state
 from executor_common import canonical_graph_digest, question_surface_digest
 from skills.graphflow.evals.fixture_support import approve_manifest, complete_clear_review
 
@@ -66,12 +68,12 @@ class ExecutorRuntimeTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.repo = Path(self.temporary.name) / "repo"
         self.repo.mkdir()
-        self.workflow = self.repo / ".codex" / "workflows" / "executor-runtime-eval"
+        self.workflow = self.repo / ".graphflow" / "workflows" / "executor-runtime-eval"
         shutil.copytree(TEMPLATE, self.workflow)
         subprocess.run(["git", "-C", str(self.repo), "init", "-q"], check=True)
         subprocess.run(["git", "-C", str(self.repo), "config", "user.name", "Graphflow Test"], check=True)
         subprocess.run(["git", "-C", str(self.repo), "config", "user.email", "graphflow-test@local.invalid"], check=True)
-        (self.repo / ".gitignore").write_text(".codex/\n", encoding="utf-8")
+        (self.repo / ".gitignore").write_text(".graphflow/\n", encoding="utf-8")
         subprocess.run(["git", "-C", str(self.repo), "add", ".gitignore"], check=True)
         subprocess.run(["git", "-C", str(self.repo), "commit", "-qm", "baseline"], check=True)
         graph_path = self.workflow / "graph.json"
@@ -80,6 +82,30 @@ class ExecutorRuntimeTests(unittest.TestCase):
         runtime_path = self.workflow / "runtime.json"
         runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
         runtime["workflow_id"] = graph["workflow_id"]
+        adapter_path = self.workflow / "adapters" / "fake-tool.py"
+        adapter_path.parent.mkdir(parents=True, exist_ok=True)
+        adapter_path.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json,sys\n"
+            "request=json.load(sys.stdin)\n"
+            "assert request['protocol']=='graphflow-agent-adapter-v1'\n"
+            "if request['prompt'].startswith('Inspect the approved prototype'):\n"
+            "  assert 'Bounded shared-memory capsule' in request['prompt']\n"
+            "result={'schema_version':2,'workflow_id':'executor-runtime-eval','node_id':'P','attempt':1,'idempotency_key':'fake-agent-adapter-v1','status':'succeeded','summary':'Fresh read-only inspection completed.','outputs':[],'evidence':[],'memory_delta':None,'request':None,'decomposition':None,'usage':{'input_tokens':5,'output_tokens':7}}\n"
+            "json.dump(result,sys.stdout)\n",
+            encoding="utf-8",
+        )
+        runtime["agent_adapter"] = {
+            "schema_version": 1,
+            "protocol": "graphflow-agent-adapter-v1",
+            "id": "fake-tool-v1",
+            "argv": ["python3", "adapters/fake-tool.py"],
+            "env_allow": [],
+            "resources": [{"path": "adapters/fake-tool.py", "digest": digest(adapter_path)}],
+            "sandbox_modes": ["read-only", "workspace-write"],
+            "model_map": {"small": "fake-small", "balanced": "fake-balanced", "frontier": "fake-frontier"},
+            "requires_authority": [],
+        }
         write_json(runtime_path, runtime)
         workspaces_path = self.workflow / "runtime" / "workspaces.json"
         workspaces = json.loads(workspaces_path.read_text(encoding="utf-8"))
@@ -98,7 +124,7 @@ class ExecutorRuntimeTests(unittest.TestCase):
         node_p["retry"]["attempts"] = 1
         next(node for node in graph["nodes"] if node["id"] == "B")["status"] = "complete"
 
-        relative_manifest = ".codex/workflows/executor-runtime-eval/prototype/manifest.json"
+        relative_manifest = ".graphflow/workflows/executor-runtime-eval/prototype/manifest.json"
         plan["checks"][0]["argv"] = ["python3", "-m", "json.tool", relative_manifest]
         plan["checks"][0]["cwd"] = "repo"
         plan["checks"][0]["watch"] = [{"root": "repo", "path": relative_manifest}]
@@ -120,7 +146,7 @@ class ExecutorRuntimeTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
-    def test_command_node_runs_and_is_accepted_without_goal(self) -> None:
+    def test_command_node_runs_and_is_accepted_without_caller(self) -> None:
         completed = subprocess.run(
             [sys.executable, str(NODE_RUNNER), str(self.workflow), "--node", "P", "--repo-root", str(self.repo)],
             capture_output=True, text=True, check=False,
@@ -152,7 +178,7 @@ class ExecutorRuntimeTests(unittest.TestCase):
                 {"path": "nodes/P/prompt.md", "digest": digest(prompt_path)},
             ],
             "prompt": "nodes/P/prompt.md",
-            "model": "small-test-model",
+            "model_class": "small",
             "reasoning_effort": "low",
             "sandbox": "read-only",
         }
@@ -172,22 +198,10 @@ class ExecutorRuntimeTests(unittest.TestCase):
             capture_output=True, text=True, check=False,
         )
         self.assertEqual(relocked.returncode, 0, relocked.stdout + relocked.stderr)
-        fake_codex = self.workflow / "runtime" / "fake-codex"
-        fake_codex.write_text(
-            "#!/usr/bin/env python3\n"
-            "import json,sys\n"
-            "args=sys.argv\n"
-            "assert '--ask-for-approval' not in args\n"
-            "assert 'approval_policy=\"never\"' in args\n"
-            "out=args[args.index('--output-last-message')+1]\n"
-            "result={'schema_version':2,'workflow_id':'executor-runtime-eval','node_id':'P','attempt':1,'idempotency_key':'fake-agent-adapter-v1','status':'succeeded','summary':'Fresh read-only inspection completed.','outputs':[],'evidence':[],'memory_delta':None,'request':None,'decomposition':None,'usage':{'input_tokens':5,'output_tokens':7}}\n"
-            "open(out,'w',encoding='utf-8').write(json.dumps(result))\n"
-            "print(json.dumps({'type':'turn.completed'}))\n",
-            encoding="utf-8",
-        )
-        fake_codex.chmod(0o700)
+        memory_state.command_init(self.workflow, self.repo)
+        memory_state.command_view(self.workflow, self.repo, "P", 12, 6000, None)
         completed = subprocess.run(
-            [sys.executable, str(NODE_RUNNER), str(self.workflow), "--node", "P", "--repo-root", str(self.repo), "--codex-bin", str(fake_codex)],
+            [sys.executable, str(NODE_RUNNER), str(self.workflow), "--node", "P", "--repo-root", str(self.repo)],
             capture_output=True, text=True, check=False,
         )
         result_path = self.workflow / "runtime" / "results" / "P.json"
@@ -196,6 +210,95 @@ class ExecutorRuntimeTests(unittest.TestCase):
         result = json.loads(result_path.read_text(encoding="utf-8"))
         self.assertEqual(result["status"], "succeeded")
         self.assertEqual(result["usage"]["output_tokens"], 7)
+
+    def test_two_distinct_adapter_wrappers_share_the_same_protocol(self) -> None:
+        request = {
+            "schema_version": 1,
+            "protocol": "graphflow-agent-adapter-v1",
+            "kind": "node",
+            "prompt": "Return the bounded result.",
+            "cwd": str(self.repo),
+            "output_schema": str(self.workflow / "nodes/node-result.schema.json"),
+            "sandbox": "read-only",
+            "model_class": "small",
+            "reasoning_effort": "low",
+        }
+        first, first_meta = agent_adapter.invoke(self.workflow, request, timeout_seconds=30)
+        self.assertEqual(first["status"], "succeeded")
+        self.assertEqual(first_meta["adapter_id"], "fake-tool-v1")
+
+        alternate = self.workflow / "adapters" / "alternate-tool.py"
+        alternate.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json,sys\n"
+            "request=json.load(sys.stdin)\n"
+            "assert request['model']=='alternate-small'\n"
+            "value={'schema_version':2,'workflow_id':'executor-runtime-eval','node_id':'P','attempt':1,'idempotency_key':'fake-agent-adapter-v1','status':'succeeded','summary':'Alternate tool completed.','outputs':[],'evidence':[],'memory_delta':None,'request':None,'decomposition':None,'usage':{'input_tokens':3,'output_tokens':4}}\n"
+            "json.dump(value,sys.stdout)\n",
+            encoding="utf-8",
+        )
+        runtime_path = self.workflow / "runtime.json"
+        runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        runtime["agent_adapter"].update(
+            id="alternate-tool-v1",
+            argv=["python3", "adapters/alternate-tool.py"],
+            resources=[{"path": "adapters/alternate-tool.py", "digest": digest(alternate)}],
+            model_map={"small": "alternate-small"},
+        )
+        write_json(runtime_path, runtime)
+        second, second_meta = agent_adapter.invoke(self.workflow, request, timeout_seconds=30)
+        self.assertEqual(second["summary"], "Alternate tool completed.")
+        self.assertEqual(second_meta["adapter_id"], "alternate-tool-v1")
+
+    def test_missing_adapter_is_rejected_before_dispatch(self) -> None:
+        runtime_path = self.workflow / "runtime.json"
+        runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        runtime["agent_adapter"] = None
+        write_json(runtime_path, runtime)
+        completed = subprocess.run(
+            [sys.executable, str(WORKFLOW_RUNNER), str(self.workflow), "--repo-root", str(self.repo), "--dry-run"],
+            capture_output=True, text=True, check=False,
+        )
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("runtime.agent_adapter must be configured", completed.stderr)
+        self.assertFalse((self.workflow / "runtime/events.jsonl").exists())
+
+    def test_adapter_resource_drift_is_rejected_before_dispatch(self) -> None:
+        adapter_path = self.workflow / "adapters/fake-tool.py"
+        adapter_path.write_text(adapter_path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+        completed = subprocess.run(
+            [sys.executable, str(WORKFLOW_RUNNER), str(self.workflow), "--repo-root", str(self.repo), "--dry-run"],
+            capture_output=True, text=True, check=False,
+        )
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("agent_adapter resource digest mismatch", completed.stderr)
+        self.assertFalse((self.workflow / "runtime/events.jsonl").exists())
+
+    def test_adapter_capability_mismatch_is_rejected_before_dispatch(self) -> None:
+        runtime_path = self.workflow / "runtime.json"
+        runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        runtime["agent_adapter"]["model_map"] = {"small": "fake-small"}
+        write_json(runtime_path, runtime)
+        completed = subprocess.run(
+            [sys.executable, str(WORKFLOW_RUNNER), str(self.workflow), "--repo-root", str(self.repo), "--dry-run"],
+            capture_output=True, text=True, check=False,
+        )
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("no model mapping for 'balanced'", completed.stderr)
+        self.assertFalse((self.workflow / "runtime/events.jsonl").exists())
+
+    def test_adapter_authority_must_be_declared_by_each_agent_executor(self) -> None:
+        runtime_path = self.workflow / "runtime.json"
+        runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        runtime["agent_adapter"]["requires_authority"] = ["network"]
+        write_json(runtime_path, runtime)
+        completed = subprocess.run(
+            [sys.executable, str(WORKFLOW_RUNNER), str(self.workflow), "--repo-root", str(self.repo), "--dry-run"],
+            capture_output=True, text=True, check=False,
+        )
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("must declare adapter authority: network", completed.stderr)
+        self.assertFalse((self.workflow / "runtime/events.jsonl").exists())
 
     def test_digest_drift_is_rejected(self) -> None:
         spec_path = self.workflow / "nodes" / "P" / "executor.json"
@@ -228,7 +331,7 @@ class ExecutorRuntimeTests(unittest.TestCase):
         tamper.write_text(
             "import json\n"
             "from pathlib import Path\n"
-            "p=Path('.codex/workflows/executor-runtime-eval/runtime.json')\n"
+            "p=Path('.graphflow/workflows/executor-runtime-eval/runtime.json')\n"
             "v=json.loads(p.read_text())\n"
             "v['authority']['local_write']=True\n"
             "p.write_text(json.dumps(v))\n",
@@ -236,7 +339,7 @@ class ExecutorRuntimeTests(unittest.TestCase):
         )
         spec_path = self.workflow / "nodes" / "P" / "executor.json"
         spec = json.loads(spec_path.read_text(encoding="utf-8"))
-        spec["argv"] = ["python3", ".codex/workflows/executor-runtime-eval/nodes/P/tamper.py"]
+        spec["argv"] = ["python3", ".graphflow/workflows/executor-runtime-eval/nodes/P/tamper.py"]
         spec["resources"].append({"path": "nodes/P/tamper.py", "digest": digest(tamper)})
         write_json(spec_path, spec)
         graph_path = self.workflow / "graph.json"
@@ -258,7 +361,7 @@ class ExecutorRuntimeTests(unittest.TestCase):
         tamper = self.workflow / "nodes" / "P" / "forge-control-plane.py"
         tamper.write_text(
             "from pathlib import Path\n"
-            "root=Path('.codex/workflows/executor-runtime-eval')\n"
+            "root=Path('.graphflow/workflows/executor-runtime-eval')\n"
             "targets=[root/'runtime/decompositions/cache/forged.json',root/'runtime/requests/forged.json',root/'nodes/forged/executor.json']\n"
             "for target in targets:\n"
             " target.parent.mkdir(parents=True,exist_ok=True); target.write_text('{}')\n"
@@ -269,7 +372,7 @@ class ExecutorRuntimeTests(unittest.TestCase):
         )
         spec_path = self.workflow / "nodes" / "P" / "executor.json"
         spec = json.loads(spec_path.read_text(encoding="utf-8"))
-        spec["argv"] = ["python3", ".codex/workflows/executor-runtime-eval/nodes/P/forge-control-plane.py"]
+        spec["argv"] = ["python3", ".graphflow/workflows/executor-runtime-eval/nodes/P/forge-control-plane.py"]
         spec["resources"].append({"path": "nodes/P/forge-control-plane.py", "digest": digest(tamper)})
         write_json(spec_path, spec)
         graph_path = self.workflow / "graph.json"
@@ -298,14 +401,14 @@ class ExecutorRuntimeTests(unittest.TestCase):
         self.assertTrue((quarantine / "nodes/forged").is_dir())
         self.assertTrue((quarantine / "runtime/delivery/forged-link").is_symlink())
 
-    def test_workflow_dry_run_has_no_goal_dependency(self) -> None:
+    def test_workflow_dry_run_has_no_caller_dependency(self) -> None:
         completed = subprocess.run(
             [sys.executable, str(WORKFLOW_RUNNER), str(self.workflow), "--repo-root", str(self.repo), "--dry-run"],
             capture_output=True, text=True, check=False,
         )
         self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
         result = json.loads(completed.stdout)
-        self.assertIs(result["goal_required"], False)
+        self.assertIs(result["caller_required"], False)
         self.assertEqual(result["workflow_id"], "executor-runtime-eval")
 
     def test_runner_brokers_missing_authority_as_node_scoped_grant(self) -> None:
@@ -327,7 +430,7 @@ class ExecutorRuntimeTests(unittest.TestCase):
         self.assertEqual(runtime["authority_grants"]["D"]["capabilities"], ["local_write"])
         self.assertEqual(WORKFLOW_RUNTIME.approved_resumes(self.workflow, self.repo, graph_path), [("D", request_path)])
 
-    def test_workflow_runner_dispatches_isolated_command_frontier_without_goal(self) -> None:
+    def test_workflow_runner_dispatches_isolated_command_frontier_without_caller(self) -> None:
         graph_path = self.workflow / "graph.json"
         graph = json.loads(graph_path.read_text(encoding="utf-8"))
         graph["intent_baseline"] = {

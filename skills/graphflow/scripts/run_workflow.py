@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run or resume a persistent Graphflow DAG without depending on Goal."""
+"""Run or resume a persistent Graphflow DAG without depending on a caller session."""
 
 from __future__ import annotations
 
@@ -23,7 +23,9 @@ import workspace_manager
 import delivery_broker
 import checkout_guard
 import decomposition_broker
+import agent_adapter
 import evidence_runner
+import memory_state
 from executor_common import (
     AUTHORITY_CAPABILITIES,
     DIGEST_RE,
@@ -112,7 +114,7 @@ def save_runtime(workflow_dir: Path, graph: dict[str, Any], status: str, blocker
         workflow_id=graph.get("workflow_id"),
         scheduler={"status": status, "pid": os.getpid() if status == "active" else None, "updated_at": now_utc(), "blocker": blocker},
     )
-    existing.setdefault("goal_adapter", None)
+    existing.setdefault("caller_adapter", None)
     existing.setdefault("delivery", delivery_broker.default_config())
     existing.setdefault("checkout_guard", checkout_guard.default_config())
     existing.setdefault("decomposition", decomposition_broker.default_config())
@@ -349,10 +351,10 @@ def approved_resumes(workflow_dir: Path, repo_root: Path, graph_path: Path) -> l
     return ready
 
 
-def execute_node(workflow_dir: Path, repo_root: Path, node_id: str, codex_bin: str, confirmation: Path | None) -> tuple[str, int, str]:
+def execute_node(workflow_dir: Path, repo_root: Path, node_id: str, confirmation: Path | None) -> tuple[str, int, str]:
     argv = [
         sys.executable, str(NODE_RUNNER), str(workflow_dir), "--node", node_id,
-        "--repo-root", str(repo_root), "--codex-bin", codex_bin,
+        "--repo-root", str(repo_root),
     ]
     if confirmation is not None:
         argv.extend(["--confirmation-file", str(confirmation)])
@@ -596,7 +598,7 @@ def apply_verifier_proposal(
     workflow_state.atomic_write(graph_path, candidate)
 
 
-def consume_result(workflow_dir: Path, repo_root: Path, graph_path: Path, node_id: str, codex_bin: str) -> str:
+def consume_result(workflow_dir: Path, repo_root: Path, graph_path: Path, node_id: str) -> str:
     graph = workflow_state.read_graph(graph_path)
     node = workflow_state.node_map(graph)[node_id]
     _, _, spec, result_path = load_executor(workflow_dir, node_id)
@@ -611,7 +613,7 @@ def consume_result(workflow_dir: Path, repo_root: Path, graph_path: Path, node_i
     if contract["mode"] != "verifier" and result.get("verification") is not None:
         raise ValueError("only a verifier workspace may return a verification proposal")
     if status == "decompose":
-        outcome = decomposition_broker.apply(workflow_dir, repo_root, node_id, result, codex_bin)
+        outcome = decomposition_broker.apply(workflow_dir, repo_root, node_id, result)
         revoke_node_grant(workflow_dir, node_id)
         if outcome["status"] == "waiting_rebase":
             request = store_request(workflow_dir, graph, node_id, {"request": outcome["request"]})
@@ -673,7 +675,7 @@ def consume_result(workflow_dir: Path, repo_root: Path, graph_path: Path, node_i
 
 
 def reconcile_durable_results(
-    workflow_dir: Path, repo_root: Path, graph_path: Path, events_path: Path, codex_bin: str,
+    workflow_dir: Path, repo_root: Path, graph_path: Path, events_path: Path,
 ) -> list[str]:
     graph = workflow_state.read_graph(graph_path)
     reconciled: list[str] = []
@@ -687,7 +689,7 @@ def reconcile_durable_results(
             continue
         node_id = str(node["id"])
         try:
-            outcome = consume_result(workflow_dir, repo_root, graph_path, node_id, codex_bin)
+            outcome = consume_result(workflow_dir, repo_root, graph_path, node_id)
         except ValueError as error:
             workflow_state.transition(arg_namespace(graph_path, node_id, "failed", blocker=str(error), summary="Durable result reconciliation failed."))
             outcome = "failed"
@@ -767,7 +769,6 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("workflow_dir", type=Path)
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
-    parser.add_argument("--codex-bin", default=shutil.which("codex") or "codex")
     parser.add_argument("--once", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--recover-stale-lease", action="store_true")
@@ -791,6 +792,20 @@ def main() -> int:
             raise ValueError(f"question gate is not locked: {output}")
         graph = workflow_state.read_graph(graph_path)
         verify_executors(workflow_dir, graph)
+        if any(
+            isinstance(node, dict)
+            and isinstance(node.get("executor"), dict)
+            and node["executor"].get("type") == "agent"
+            and node.get("status") not in {"complete", "expanded", "cancelled"}
+            for node in graph.get("nodes", [])
+        ):
+            for node in graph.get("nodes", []):
+                if not isinstance(node, dict) or not isinstance(node.get("executor"), dict):
+                    continue
+                if node["executor"].get("type") != "agent" or node.get("status") in {"complete", "expanded", "cancelled"}:
+                    continue
+                _, _, agent_spec, _ = load_executor(workflow_dir, str(node["id"]))
+                agent_adapter.validate_executor(workflow_dir, agent_spec)
         delivery_preflight = delivery_broker.preflight(
             workflow_dir,
             repo_root,
@@ -806,12 +821,12 @@ def main() -> int:
             }, indent=2))
             return 0
         if args.dry_run:
-            print(json.dumps({"workflow_id": graph.get("workflow_id"), "ready": workflow_state.ready_ids(graph), "goal_required": False}, indent=2))
+            print(json.dumps({"workflow_id": graph.get("workflow_id"), "ready": workflow_state.ready_ids(graph), "caller_required": False}, indent=2))
             return 0
         guard_exit = stop_if_checkout_drifted(workflow_dir, repo_root, graph, events_path)
         if guard_exit is not None:
             return guard_exit
-        reconciled = reconcile_durable_results(workflow_dir, repo_root, graph_path, events_path, args.codex_bin)
+        reconciled = reconcile_durable_results(workflow_dir, repo_root, graph_path, events_path)
         recovered = reconcile_lost_active(graph_path)
         append_event(events_path, {
             "type": "runner_started", "at": now_utc(), "pid": os.getpid(), "reconciled": reconciled,
@@ -851,6 +866,8 @@ def main() -> int:
             for node_id, confirmation in selected:
                 _, _, selected_spec, _ = load_executor(workflow_dir, node_id)
                 selected_contract = workspace_manager.workspace_contract(selected_spec)
+                if selected_spec["type"] == "agent":
+                    memory_state.command_view(workflow_dir, repo_root, node_id, 12, 6000, None)
                 progress_state.update(workflow_dir, node_id, "queued", workspace_ref=selected_contract["ref"])
                 if confirmation is None:
                     workflow_state.transition(arg_namespace(graph_path, node_id, "active", agent="node-runner", increment_attempt=True))
@@ -864,7 +881,7 @@ def main() -> int:
                     workflow_state.transition(arg_namespace(graph_path, node_id, "active", summary="Resuming with digest-bound confirmation."))
                 append_event(events_path, {"type": "node_dispatched", "at": now_utc(), "node_id": node_id, "confirmation": confirmation.name if confirmation else None})
             with concurrent.futures.ThreadPoolExecutor(max_workers=len(selected)) as pool:
-                futures = [pool.submit(execute_node, workflow_dir, repo_root, node_id, args.codex_bin, confirmation) for node_id, confirmation in selected]
+                futures = [pool.submit(execute_node, workflow_dir, repo_root, node_id, confirmation) for node_id, confirmation in selected]
                 completed_nodes = []
                 for future in concurrent.futures.as_completed(futures):
                     finished = future.result()
@@ -878,7 +895,7 @@ def main() -> int:
                 return guard_exit
             for node_id, exit_code, detail in completed_nodes:
                 try:
-                    outcome = consume_result(workflow_dir, repo_root, graph_path, node_id, args.codex_bin)
+                    outcome = consume_result(workflow_dir, repo_root, graph_path, node_id)
                 except ValueError as error:
                     workflow_state.transition(arg_namespace(graph_path, node_id, "failed", blocker=str(error), summary="Runner rejected the node result."))
                     outcome = "failed"

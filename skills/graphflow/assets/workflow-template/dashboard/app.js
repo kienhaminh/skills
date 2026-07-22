@@ -314,10 +314,10 @@ function renderHeader() {
   const scheduler = asObject(asObject(state.runtime).scheduler);
   const intentLabel = intent.required === false ? "not required" : intent.status || "missing";
   const integrityLabel = `${integrity.level || "missing"}/${integrity.status || "missing"}`;
-  elements.goalBinding.textContent = `Lifecycle: ${lifecycle.status || "unknown"} · Runner: ${scheduler.status || "unknown"} · Goal: optional · Questions: ${questionGate.status || "missing"}/${questionReview.status || "missing"} · Intent: ${intentLabel} · Integrity: ${integrityLabel} · Evidence: ${verification.outcome || "missing"}`;
+  elements.goalBinding.textContent = `Lifecycle: ${lifecycle.status || "unknown"} · Runner: ${scheduler.status || "unknown"} · Caller: optional · Questions: ${questionGate.status || "missing"}/${questionReview.status || "missing"} · Intent: ${intentLabel} · Integrity: ${integrityLabel} · Evidence: ${verification.outcome || "missing"}`;
   elements.planSummary.textContent = state.runtimeError
     ? `Runtime unavailable: ${state.runtimeError}`
-    : `Persistent DAG runner · Goal-independent · ${scheduler.blocker || "no workflow-wide blocker"}`;
+    : `Persistent DAG runner · caller-independent · ${scheduler.blocker || "no workflow-wide blocker"}`;
   const optional = asArray(graph.optional_work);
   const deferred = optional.filter((item) => asObject(item).status === "deferred").length;
   elements.optionalSummary.textContent = `${optional.length} captured · ${deferred} deferred`;

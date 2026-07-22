@@ -269,8 +269,8 @@ def main() -> int:
     if args.max_age_days < 0:
         parser.error("--max-age-days must be non-negative")
 
-    global_path = Path(args.global_output).expanduser() if args.global_output else Path.home() / ".codex" / "graphflow-profiles" / "machine.json"
-    repo_path = Path(args.repo_output).expanduser() if args.repo_output else repo / ".codex" / "graphflow-profile.json"
+    global_path = Path(args.global_output).expanduser() if args.global_output else Path.home() / ".graphflow" / "profiles" / "machine.json"
+    repo_path = Path(args.repo_output).expanduser() if args.repo_output else repo / ".graphflow" / "profile.json"
     machine = machine_profile(repo)
     overlay = repository_profile(repo, machine["fingerprint"])
     machine_reused = is_fresh(load_json(global_path), machine["fingerprint"], args.max_age_days)

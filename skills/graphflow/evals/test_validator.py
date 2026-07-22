@@ -58,6 +58,23 @@ def errors(
     with tempfile.TemporaryDirectory() as temporary:
         workflow = Path(temporary) / "workflow"
         shutil.copytree(TEMPLATE.parent, workflow)
+        adapter_path = workflow / "adapters" / "noop.py"
+        adapter_path.parent.mkdir(parents=True, exist_ok=True)
+        adapter_path.write_text("import json,sys\njson.dump({},sys.stdout)\n", encoding="utf-8")
+        runtime_path = workflow / "runtime.json"
+        runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        runtime["agent_adapter"] = {
+            "schema_version": 1,
+            "protocol": "graphflow-agent-adapter-v1",
+            "id": "validator-noop-v1",
+            "argv": ["python3", "adapters/noop.py"],
+            "env_allow": [],
+            "resources": [{"path": "adapters/noop.py", "digest": "sha256:" + hashlib.sha256(adapter_path.read_bytes()).hexdigest()}],
+            "sandbox_modes": ["read-only", "workspace-write"],
+            "model_map": {"small": "small", "balanced": "balanced", "frontier": "frontier"},
+            "requires_authority": [],
+        }
+        runtime_path.write_text(json.dumps(runtime, indent=2) + "\n", encoding="utf-8")
         intent = data.get("intent_baseline")
         if isinstance(intent, dict) and intent.get("required") is True:
             manifest_path = workflow / "prototype/manifest.json"

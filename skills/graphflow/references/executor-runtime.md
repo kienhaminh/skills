@@ -1,6 +1,6 @@
 # Executor runtime
 
-Apply **Dependency Inversion + Design by Contract + Event Sourcing**. Graphflow schedules durable node executors; Goal is an optional adapter that may observe, notify, or invoke the same resume command.
+Apply **Dependency Inversion + Design by Contract + Event Sourcing**. Graphflow schedules durable node executors; any chat task, IDE, loop, or goal system is an optional caller that may observe, notify, or invoke the same resume command.
 
 ## Artifact contract
 
@@ -22,7 +22,7 @@ Apply **Dependency Inversion + Design by Contract + Event Sourcing**. Graphflow 
   nodes/node-result.schema.json
 ```
 
-`graph.json` declares dependencies, ownership, executor type/spec/digest, and result path. Executor specs contain provider/runtime choices. Runtime files contain leases, processes, requests, results, and optional Goal bindings. Never put credentials, environment values, transcripts, or chain-of-thought in any artifact.
+`graph.json` declares dependencies, ownership, executor type/spec/digest, and result path. Executor specs contain tool-neutral capability choices; `runtime.json.agent_adapter` maps them to one coding tool. Runtime files contain leases, processes, requests, results, and optional caller bindings. Never put credentials, environment values, transcripts, or chain-of-thought in any artifact.
 
 ## Executor spec
 
@@ -33,9 +33,12 @@ Common fields: `schema_version: 2`, matching `node_id`, `type`, exact `workspace
 If delivery is required, model Ship Gate before its bounded Record node, then rerun affected release checks through final verification before using coordinator-owned `delivery_broker.py`. Do not model commit/push/PR as worker executors: the broker binds one approval to the verified tree and handles their distinct recovery/idempotency states without exposing credentials. Never encode secrets in argv, resources, runtime, or events.
 
 - `command`: declare non-empty `argv`; the runner uses no shell and creates the result envelope from exit state.
-- `agent`: declare `prompt`, optional provider model/effort, and `sandbox` (`read-only` or `workspace-write`). The local adapter invokes `codex exec` non-interactively with stdin, JSON events, and the output schema. It never uses `danger-full-access` or bypass flags.
+- `agent`: declare `prompt`, optional `model_class` (`small`, `balanced`, or `frontier`), effort, and `sandbox` (`read-only` or `workspace-write`). Configure the digest-locked process contract in [Coding-tool adapters](tool-adapters.md). The adapter must reject any sandbox or structured-output requirement it cannot enforce.
 
-Generate prompts from the compact worker contract and bounded memory capsule. Include selected skill paths, named inputs, scopes, acceptance, authority, budget, and result schema. Never include main chat history or hidden reasoning.
+Generate prompts from the compact worker contract and bounded memory capsule. Immediately before each
+agent dispatch, the runner regenerates `memory/capsules/<node-id>.json`, validates its memory revision
+and graph binding, and injects it into the prompt. Include selected skill paths, named inputs, scopes,
+acceptance, authority, budget, and result schema. Never include main chat history or hidden reasoning.
 
 ## Acceptance and anti-cheating
 
@@ -84,6 +87,6 @@ python3 <skill-dir>/scripts/confirm_workflow.py <workflow-dir> \
 
 The next run supplies only that response to the same executor. A changed request digest invalidates the response.
 
-## Optional Goal adapter
+## Optional caller adapter
 
-Goal may store a provider binding in `runtime.json`, show material events, or invoke the same resume command. It must not own graph state, dispatch nodes, synthesize confirmations, or be required for liveness. Test the core lifecycle with no Goal present.
+A caller may store a binding in `runtime.json`, show material events, or invoke the same resume command. It must not own graph state, dispatch nodes, synthesize confirmations, or be required for liveness. Test the core lifecycle with no caller session present.

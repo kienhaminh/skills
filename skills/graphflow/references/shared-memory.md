@@ -42,7 +42,7 @@ Store only `fact`, `decision`, `risk`, `question`, `learning`, or `handoff` entr
 
 For local uncertainty, record only the chosen evidence-backed reversible assumption and affected nodes. Material questions use the runtime confirmation broker; after resolution, store the decision rather than the question transcript. Active pivotal questions still block completion.
 
-Capsules rank pivotal entries, explicit relevance, requirement matches, node ownership, and dependency ancestry; default output is bounded. Any revision change invalidates materialized capsules, so regenerate immediately before dispatch. Pass the capsule, never the whole state/event log.
+Capsules rank pivotal entries, explicit relevance, requirement matches, node ownership, and dependency ancestry; default output is bounded. Any revision change invalidates materialized capsules. `run_workflow.py` regenerates and validates the target node's capsule immediately before agent dispatch; `node_runner.py` injects it into the prompt. Pass the capsule, never the whole state/event log.
 
 ## Recovery + completion
 

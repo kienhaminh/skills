@@ -14,7 +14,7 @@
     {"path": "nodes/B/prompt.md", "digest": "sha256:1562371c0551a363a54040536966d7ae25680f3e9bd2389ba207e41f25d1567b"}
   ],
   "prompt": "nodes/B/prompt.md",
-  "model": "gpt-5.6-terra",
+  "model_class": "balanced",
   "reasoning_effort": "medium",
   "sandbox": "workspace-write"
 }

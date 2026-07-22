@@ -13,6 +13,9 @@ from collections import defaultdict, deque
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+import agent_adapter
+from executor_common import load_executor
+
 
 KINDS = {"expand", "execute", "integrate", "verify"}
 WAITING_STATUSES = {"waiting_user", "waiting_approval", "waiting_external"}
@@ -1067,6 +1070,24 @@ def validate(data: Any, phase: str, workflow_dir: Path | None = None) -> tuple[l
 
     if workflow_dir is not None:
         errors.extend(validate_intent_artifact(data, workflow_dir, phase))
+        if phase in {"executable", "complete"} and any(
+            isinstance(node, dict)
+            and isinstance(node.get("executor"), dict)
+            and node["executor"].get("type") == "agent"
+            and node.get("status") not in {"complete", "expanded", "cancelled"}
+            for node in (data.get("nodes", []) if isinstance(data, dict) else [])
+        ):
+            try:
+                agent_adapter.load_adapter(workflow_dir)
+                for node in data.get("nodes", []):
+                    if not isinstance(node, dict) or not isinstance(node.get("executor"), dict):
+                        continue
+                    if node["executor"].get("type") != "agent" or node.get("status") in {"complete", "expanded", "cancelled"}:
+                        continue
+                    _, _, spec, _ = load_executor(workflow_dir, str(node["id"]))
+                    agent_adapter.validate_executor(workflow_dir, spec)
+            except ValueError as error:
+                add(errors, "runtime.agent_adapter", str(error))
     return errors, warnings, ready
 
 

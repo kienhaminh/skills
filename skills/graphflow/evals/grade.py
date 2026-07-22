@@ -202,14 +202,14 @@ def grade(root: Path) -> dict[str, Any]:
                 executor_errors.append(f"workspace allocation collision or missing {field}")
     runtime = load_json(root / "runtime.json")
     runtime_authority = runtime.get("authority") if isinstance(runtime, dict) else None
-    goal_independent = (
+    caller_independent = (
         isinstance(runtime, dict)
         and runtime.get("workflow_id") == (graph.get("workflow_id") if isinstance(graph, dict) else None)
-        and runtime.get("goal_adapter") is None
+        and runtime.get("caller_adapter") is None
         and isinstance(runtime_authority, dict)
         and all(isinstance(value, bool) for value in runtime_authority.values())
     )
-    add_check(checks, "goal-independent executor contract", 3, executor_count > 0 and not executor_errors and goal_independent, f"executors={executor_count}, errors={executor_errors}, goal_optional={goal_independent}")
+    add_check(checks, "caller-independent executor contract", 3, executor_count > 0 and not executor_errors and caller_independent, f"executors={executor_count}, errors={executor_errors}, caller_optional={caller_independent}")
     decomposition = runtime.get("decomposition") if isinstance(runtime, dict) else None
     decomposition_ok = (
         isinstance(decomposition, dict)
@@ -319,7 +319,7 @@ def grade(root: Path) -> dict[str, Any]:
         attacks_ok = all(attack_text) and all("ERROR" in value or "error" in value.lower() or "reject" in value.lower() for value in attack_text)
         add_check(checks, "adversarial integrity rejection", 3, attacks_ok, f"captured={sum(bool(value) for value in attack_text)}/3")
 
-    if isinstance(constraints, dict) and constraints.get("requires_goal_independent_execution") is True:
+    if isinstance(constraints, dict) and constraints.get("requires_caller_independent_execution") is True:
         try:
             runtime_events = (root / "runtime" / "events.jsonl").read_text(encoding="utf-8")
         except OSError:
@@ -331,9 +331,9 @@ def grade(root: Path) -> dict[str, Any]:
             and '"type":"node_finished"' in runtime_events
             and any(isinstance(item, dict) and item.get("status") == "succeeded" for item in node_results)
             and isinstance(runtime, dict)
-            and runtime.get("goal_adapter") is None
+            and runtime.get("caller_adapter") is None
         )
-        add_check(checks, "Goal-independent execution trace", 4, executed, f"events={len(runtime_events.splitlines())}, succeeded_results={sum(isinstance(item, dict) and item.get('status') == 'succeeded' for item in node_results)}")
+        add_check(checks, "caller-independent execution trace", 4, executed, f"events={len(runtime_events.splitlines())}, succeeded_results={sum(isinstance(item, dict) and item.get('status') == 'succeeded' for item in node_results)}")
 
     extra_required = case.get("required_artifacts", []) if isinstance(case, dict) else []
     if extra_required:
@@ -373,7 +373,7 @@ def grade(root: Path) -> dict[str, Any]:
         "question triage gate",
         "calibrated evidence contract",
         "operational handoff",
-        "goal-independent executor contract",
+        "caller-independent executor contract",
         "runtime structural decomposition",
         "Ship delivery contract",
     }
@@ -381,8 +381,8 @@ def grade(root: Path) -> dict[str, Any]:
         critical.add("selective shared-memory handoff")
     if isinstance(constraints, dict) and constraints.get("requires_adversarial_integrity") is True:
         critical.add("adversarial integrity rejection")
-    if isinstance(constraints, dict) and constraints.get("requires_goal_independent_execution") is True:
-        critical.add("Goal-independent execution trace")
+    if isinstance(constraints, dict) and constraints.get("requires_caller_independent_execution") is True:
+        critical.add("caller-independent execution trace")
     critical_passed = all(check["passed"] for check in checks if check["name"] in critical) and critical.issubset({check["name"] for check in checks})
     return {"score": score, "maximum": maximum, "passed": score >= math.ceil(maximum * 0.8) and critical_passed, "checks": checks}
 

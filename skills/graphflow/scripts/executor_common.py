@@ -170,7 +170,7 @@ def validate_spec(spec: dict[str, Any], node_id: str, executor_type: str, workfl
         "schema_version", "node_id", "type", "workspace", "timeout_seconds", "idempotency_key",
         "result_schema", "acceptance_checks", "env_allow", "resources", "requires_authority",
     }
-    allowed = common | ({"argv"} if executor_type == "command" else {"prompt", "model", "reasoning_effort", "sandbox"})
+    allowed = common | ({"argv"} if executor_type == "command" else {"prompt", "model_class", "reasoning_effort", "sandbox"})
     unknown = sorted(set(spec) - allowed)
     if unknown:
         raise ValueError(f"executor spec has unknown fields: {unknown}")
@@ -227,8 +227,8 @@ def validate_spec(spec: dict[str, Any], node_id: str, executor_type: str, workfl
         inside(workflow_dir, spec.get("prompt"), "executor.prompt")
         if spec.get("sandbox") not in {"read-only", "workspace-write"}:
             raise ValueError("agent sandbox must be read-only or workspace-write")
-        if spec.get("model") is not None and (not isinstance(spec["model"], str) or not spec["model"]):
-            raise ValueError("agent model must be null or a non-empty string")
+        if spec.get("model_class") not in {None, "small", "balanced", "frontier"}:
+            raise ValueError("agent model_class must be small, balanced, frontier, or null")
         if spec.get("reasoning_effort") not in {None, "low", "medium", "high", "xhigh", "max", "ultra"}:
             raise ValueError("agent reasoning_effort is invalid")
 

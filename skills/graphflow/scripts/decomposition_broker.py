@@ -19,6 +19,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import evidence_runner
+import agent_adapter
 import memory_state
 import question_gate
 import workspace_manager
@@ -27,7 +28,7 @@ from executor_common import atomic_bytes, atomic_json, canonical_graph_digest, f
 
 POLICY = "structural-decomposition-v1"
 CONFIG_FIELDS = {
-    "schema_version", "policy", "status", "reviewer_model", "reviewer_reasoning_effort",
+    "schema_version", "policy", "status", "reviewer_model_class", "reviewer_reasoning_effort",
     "active_node", "revision", "last_proof", "failure", "updated_at",
 }
 CHILD_FIELDS = {
@@ -62,7 +63,7 @@ def default_config() -> dict[str, Any]:
         "schema_version": 1,
         "policy": POLICY,
         "status": "idle",
-        "reviewer_model": "gpt-5.6-terra",
+        "reviewer_model_class": "small",
         "reviewer_reasoning_effort": "low",
         "active_node": None,
         "revision": 0,
@@ -79,8 +80,8 @@ def validate_config(value: Any) -> dict[str, Any]:
         raise ValueError("runtime.decomposition has an unsupported schema or policy")
     if value.get("status") not in {"idle", "reviewing", "waiting_rebase", "applied", "blocked"}:
         raise ValueError("runtime.decomposition status is invalid")
-    if value.get("reviewer_model") is not None and (not isinstance(value.get("reviewer_model"), str) or not value["reviewer_model"]):
-        raise ValueError("runtime.decomposition.reviewer_model must be null or non-empty")
+    if value.get("reviewer_model_class") not in {"small", "balanced", "frontier"}:
+        raise ValueError("runtime.decomposition.reviewer_model_class must be small, balanced, or frontier")
     if value.get("reviewer_reasoning_effort") not in {"low", "medium"}:
         raise ValueError("runtime.decomposition reviewer effort must be low or medium")
     if not isinstance(value.get("revision"), int) or isinstance(value.get("revision"), bool) or value["revision"] < 0:
@@ -349,7 +350,7 @@ def build_candidate(workflow_dir: Path, node_id: str, proposal: dict[str, Any]) 
             "retry": {"attempts": 0, "max_attempts": 2, "last_failure_class": None},
             "runtime": {
                 "agent": None,
-                "model": parent_spec.get("model"),
+                "model_class": parent_spec.get("model_class"),
                 "reasoning_effort": parent_spec.get("reasoning_effort"),
                 "routing_reason": f"Runtime structural decomposition of {node_id}; contract digest {proposal_digest}.",
                 "started_at": None,
@@ -460,7 +461,7 @@ def review_cache_key(
             "challenge_classes": sorted(question_gate.CHALLENGE_CLASSES),
             "dispositions": sorted(question_gate.DISPOSITIONS),
         }),
-        "reviewer_model": config.get("reviewer_model"),
+        "reviewer_model_class": config.get("reviewer_model_class"),
         "reviewer_reasoning_effort": config.get("reviewer_reasoning_effort"),
     }
     return json_digest(identity).split(":", 1)[1], identity
@@ -515,7 +516,7 @@ def apply_review_gate(graph: dict[str, Any], review: dict[str, Any]) -> None:
 
 
 def obtain_review(
-    workflow_dir: Path, candidate: Path, proposal: dict[str, Any], codex_bin: str,
+    workflow_dir: Path, candidate: Path, proposal: dict[str, Any],
     config: dict[str, Any], reviewer_id: str, review_file: Path | None,
 ) -> tuple[dict[str, Any], str, bool]:
     graph = load_json(candidate / "graph.json", "candidate graph")
@@ -529,22 +530,25 @@ def obtain_review(
     if review_file is not None:
         review = load_json(review_file, "decomposition review")
     else:
-        if not config.get("reviewer_model"):
-            raise ValueError("automatic decomposition requires a configured low-cost reviewer model")
-        final_path = candidate / "runtime" / "decompositions" / ".review-final.json"
-        final_path.parent.mkdir(parents=True, exist_ok=True)
-        command = [
-            codex_bin, "exec", "--json", "--output-last-message", str(final_path), "--cd", str(candidate),
-            "--sandbox", "read-only", "--config", 'approval_policy="never"', "--ephemeral",
-            "--model", str(config["reviewer_model"]),
-            "--config", f"model_reasoning_effort={config['reviewer_reasoning_effort']}", "-",
-        ]
-        completed = subprocess.run(
-            command, input=review_prompt(graph, proposal, plan, reviewer_id), capture_output=True, text=True, timeout=300, check=False,
+        review, _ = agent_adapter.invoke(
+            candidate,
+            {
+                "schema_version": 1,
+                "protocol": agent_adapter.PROTOCOL,
+                "kind": "review",
+                "prompt": review_prompt(graph, proposal, plan, reviewer_id),
+                "cwd": str(candidate),
+                "output_schema": None,
+                "sandbox": "read-only",
+                "model_class": config["reviewer_model_class"],
+                "reasoning_effort": config["reviewer_reasoning_effort"],
+            },
+            timeout_seconds=300,
+            declared_authority=[
+                name for name, granted in (load_json(candidate / "runtime.json", "runtime authority").get("authority") or {}).items()
+                if granted is True
+            ],
         )
-        if completed.returncode or not final_path.is_file():
-            raise ValueError(f"independent decomposition review failed: {(completed.stderr or completed.stdout).strip()[-1000:]}")
-        review = load_json(final_path, "decomposition review")
     if isinstance(review, dict):
         apply_review_gate(graph, review)
     errors = question_gate.validate_review(review, graph, expected_graph_digest=reviewed_surface_digest)
@@ -1001,7 +1005,7 @@ def update_runtime(workflow_dir: Path, status: str, node_id: str | None, proof_p
 
 
 def apply(
-    workflow_dir: Path, repo_root: Path, node_id: str, result: dict[str, Any], codex_bin: str,
+    workflow_dir: Path, repo_root: Path, node_id: str, result: dict[str, Any],
     review_file: Path | None = None, fault_hook: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
     workflow_dir = workflow_dir.resolve()
@@ -1030,7 +1034,7 @@ def apply(
             old_digest = canonical_graph_digest(old_graph)
             graph, created = build_candidate(candidate, node_id, proposal)
             review, cache_key, cache_hit = obtain_review(
-                workflow_dir, candidate, proposal, codex_bin, config, reviewer_id, review_file,
+                workflow_dir, candidate, proposal, config, reviewer_id, review_file,
             )
             if review.get("status") == "open":
                 request = semantic_rebase_request(old_graph, node_id, review)
@@ -1104,7 +1108,6 @@ def main() -> int:
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--node", required=True)
     parser.add_argument("--result", type=Path)
-    parser.add_argument("--codex-bin", default=shutil.which("codex") or "codex")
     parser.add_argument("--review-file", type=Path)
     args = parser.parse_args()
     try:
@@ -1114,7 +1117,7 @@ def main() -> int:
         if not isinstance(result, dict):
             raise ValueError("decomposition result must be an object")
         outcome = apply(
-            args.workflow_dir.resolve(), args.repo_root.resolve(), args.node, result, args.codex_bin,
+            args.workflow_dir.resolve(), args.repo_root.resolve(), args.node, result,
             args.review_file.resolve() if args.review_file else None,
         )
     except ValueError as error:
